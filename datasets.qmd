@@ -1,0 +1,91 @@
+---
+title: "Data & tools"
+page-layout: article
+draft: true   # deactivated for now — hidden from the built site and navbar
+---
+
+::: {.lede}
+Datasets and software released alongside my research.
+:::
+
+<!-- HOSTING RULE OF THUMB
+     Small files (under a few MB): fine in assets/data/ in this repo.
+     Anything larger: put it in a repository built for it and link out.
+       - Zenodo — free, gives you a DOI, versioned, no size anxiety
+       - OSF — good for research materials and preregistrations
+       - Dryad — common in some fields
+       - GitHub — for code, not for large data files
+
+     Zenodo is the right default. A DOI makes the dataset citable, which means
+     it counts on your CV as a research output rather than a file on a website.
+     GitHub Pages caps the published site at 1 GB, so large files will break
+     the deploy anyway.
+
+     LICENSE EVERY RELEASE. Unlicensed means legally unusable, which defeats
+     the point of posting it. Common choices:
+       - CC BY 4.0 for data — attribution required, otherwise permissive
+       - MIT or Apache 2.0 for code
+       - CC0 for anything you want maximally reusable
+     Pick one per item and state it in the entry. -->
+
+## Datasets
+
+::: {.pub}
+[Dataset · 2025]{.pub-venue}
+[Name of the dataset]{.pub-title}
+
+::: {.pub-authors}
+What it contains, how it was collected, and roughly how big it is. Note any
+restrictions on use up front — a reader deciding whether to download should
+not have to find that in a README.
+
+Licensed CC BY 4.0.
+:::
+::: {.pub-links}
+[Zenodo](https://zenodo.org/) [Documentation](https://) [Related paper](research.qmd)
+:::
+:::
+
+## Software and tools
+
+::: {.pub}
+[Tool · Maintained]{.pub-venue}
+[Name of the tool]{.pub-title}
+
+::: {.pub-authors}
+What it does and who it is for. If it came out of student work, say so and
+credit them.
+
+MIT licensed.
+:::
+::: {.pub-links}
+[Repository](https://github.com/) [Documentation](https://)
+:::
+:::
+
+::: {.pub}
+[Tool · Archived]{.pub-venue} [Unmaintained]{.tag}
+[Name of the tool]{.pub-title}
+
+::: {.pub-authors}
+Kept available for reproducibility. Not actively developed.
+:::
+::: {.pub-links}
+[Repository](https://github.com/)
+:::
+:::
+
+<!-- Marking things unmaintained is worth doing. It costs nothing and stops
+     people emailing you about a tool you stopped touching in 2024. -->
+
+## Restricted materials
+
+Some materials cannot be posted publicly — data under a use agreement,
+instruments still in use, work under embargo. [Email me](contact.qmd) with what
+you need and how you plan to use it.
+
+## Citing this work
+
+If you use a dataset or tool from this page, please cite it directly rather than
+citing the paper alone. Each entry above links to a record with a DOI and a
+suggested citation.

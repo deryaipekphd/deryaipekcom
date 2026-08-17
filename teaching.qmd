@@ -1,0 +1,99 @@
+---
+title: "Teaching"
+page-layout: article
+---
+
+::: {.lede}
+I teach across three areas at SUNY Brockport, at both the undergraduate and
+graduate levels.
+:::
+
+**Course materials, assignments, and grades live in the learning management
+system.** This page is the public description of what each course covers — if you
+are enrolled, everything you need is in the LMS.
+
+## Operations Research & Management
+
+::: {.course}
+[CIS 427/527 · Undergraduate & Graduate]{.course-code}<br>
+**Information Systems Project Management and Practice**
+
+Managing information-systems projects across the Systems Development Life Cycle:
+planning, scheduling, risk, UML Modeling, and team delivery, using
+industry-standard tools.
+:::
+
+::: {.course}
+[BIT 2406 · Undergraduate]{.course-code} [Virginia Tech]{.tag}<br>
+**Business Statistics, Analytics & Modeling**
+
+Optimization and decision modeling for business — Linear and Network Programming,
+Multicriteria Decision Making, Decision Analysis, and Forecasting.
+:::
+
+## Information Systems & Business Analytics
+
+::: {.course}
+[CIS 102 · Undergraduate]{.course-code}<br>
+**Fundamentals of Information Systems**
+
+How Information Systems create value in organizations — system types, IT
+infrastructure, Data Management, and the ethics of use.
+:::
+
+::: {.course}
+[CIS 422 · Undergraduate]{.course-code}<br>
+**Database Management Systems**
+
+Database design and implementation end to end: ER Modeling, Normalization, SQL,
+and a semester-long team database application.
+:::
+
+## Programming & Computation
+
+::: {.course}
+[CSC 120 · Undergraduate]{.course-code}<br>
+**Introduction to Computing**
+
+A first programming course, in Java — variables, control flow, methods, and
+arrays, with hands-on labs.
+:::
+
+::: {.course}
+[CIS 117 · Undergraduate]{.course-code}<br>
+**Introduction to Web Development**
+
+Foundations of web development — HTML5, CSS, and page structure — building up to a
+personal website.
+:::
+
+::: {.course}
+[CSC 602 · Graduate]{.course-code}<br>
+**Deep Learning**
+
+Neural networks and modern Deep Learning methods, from foundations to applied
+implementation.
+:::
+
+## First-year & advising
+
+::: {.course}
+[GEP 100 · Undergraduate]{.course-code}<br>
+**Academic Planning Seminar (First-Year Experience)**
+
+A first-year seminar on academic success, study strategies, planning, and campus
+resources.
+:::
+
+Beyond coursework, I advise undergraduate and graduate students and mentor
+student research — see [Ongoing projects](ongoing-projects.qmd) and the students
+note on the [Research](research.qmd) page.
+
+## Office hours
+
+Listed in the LMS each semester. Email me if none of the posted times work.
+
+<!-- Each course is a .course block: course-code (number · level, plus an
+     optional [tag]{.tag}), the title in **bold**, then a one-line description.
+     Copy a block to add a course. Add a syllabus with
+     [Syllabus](assets/syllabi/name.pdf) on its own line inside the block. -->

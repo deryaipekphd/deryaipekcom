@@ -1,0 +1,75 @@
+---
+title: "A new home for this site"
+description: "Moving off a website builder, and what the new setup can do."
+date: "2026-08-14"
+categories: [notes]
+draft: false
+---
+
+This is a working example post. Delete it once you have written a real one — or
+keep it around as a reference for the syntax below.
+
+## Writing a new post
+
+Create a folder under `posts/` and put an `index.qmd` inside it:
+
+```
+posts/
+  my-new-post/
+    index.qmd
+```
+
+Give it a title, description, and date in the front matter, and it appears on
+the [Writing](../../blog.qmd) page automatically, newest first. Set
+`draft: true` to keep a post out of the published site while you work on it.
+
+## Embedding a PDF
+
+Two options. A plain link is usually better — it works on phones, where inline
+PDF viewers tend to fail:
+
+```markdown
+[Download the slides (PDF)](../../assets/papers/example.pdf)
+```
+
+For an inline viewer on desktop:
+
+```html
+<iframe src="../../assets/papers/example.pdf"
+        width="100%" height="600" style="border:1px solid #E4E0D8;">
+</iframe>
+```
+
+## Embedding a video
+
+Paste the embed code from YouTube's Share menu:
+
+```html
+<iframe width="100%" height="400"
+        src="https://www.youtube.com/embed/VIDEO_ID"
+        title="Video title"
+        frameborder="0" allowfullscreen>
+</iframe>
+```
+
+The video stays on YouTube, so it costs you no storage and no bandwidth.
+
+## Images
+
+Put the file in the post's own folder and reference it by name:
+
+```markdown
+![Caption goes here](diagram.png)
+```
+
+Keeping images beside the post rather than in a shared folder means moving or
+deleting a post takes its images with it.
+
+## Code
+
+Fenced blocks get syntax highlighting:
+
+```python
+def hello(name):
+    return f"Merhaba, {name}"
+```

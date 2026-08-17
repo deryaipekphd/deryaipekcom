@@ -1,0 +1,21 @@
+# Quarto build output
+/_site/
+/.quarto/
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+
+**/*.quarto_ipynb
+
+# Working documents (not part of the site)
+*.docx
+
+# Claude Code local settings
+.claude/
+
+# Legal-sensitive draft — kept local only, not in the public repo
+partnerships.qmd

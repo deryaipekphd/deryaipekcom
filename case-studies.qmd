@@ -1,0 +1,88 @@
+---
+title: "Case studies"
+page-layout: article
+draft: true   # deactivated for now — hidden from the built site and navbar
+---
+
+::: {.lede}
+Applied work, written up for practitioners rather than reviewers.
+:::
+
+<!-- WHAT THIS PAGE IS FOR
+     Case studies are the bridge between the research page and the
+     partnerships page. A business reader will not open a journal article, but
+     will read two pages about a problem that looks like theirs.
+
+     Write each one to a fixed shape: the situation, what you did, what
+     changed. Resist the urge to lead with method — practitioners care about
+     the problem and the outcome, and will trust the method if the outcome
+     holds up.
+
+     BEFORE PUBLISHING ANY CASE STUDY INVOLVING A REAL ORGANIZATION:
+       - Get written permission to name them, or anonymize ("a mid-size
+         regional manufacturer"). Verbal agreement is not enough.
+       - Check your IRB determination if the work involved human subjects.
+         Research findings and a public write-up are different disclosures.
+       - Do not include client data, even aggregated, without explicit sign-off.
+       - Student-collaborative work: get the student's permission and credit
+         them by name. FERPA aside, it is theirs too.
+
+     Anonymized case studies work fine for credibility. Named ones work better,
+     but only get one of those by asking. -->
+
+## Selected case studies
+
+::: {.pub}
+[Manufacturing · 2025]{.pub-venue}
+[Short title naming the problem, not the method]{.pub-title}
+
+::: {.pub-authors}
+**Situation.** One or two sentences on what the organization was facing.
+
+**Approach.** What you actually did. Plain language — no method names unless
+the reader would recognize them.
+
+**Outcome.** What changed, with a number if you have one and permission to use
+it. If you cannot share numbers, say what became possible that was not before.
+:::
+::: {.pub-links}
+[Read the write-up](https://) [Related paper](research.qmd)
+:::
+:::
+
+::: {.pub}
+[Higher education · 2024]{.pub-venue}
+[Short title naming the problem]{.pub-title}
+
+::: {.pub-authors}
+**Situation.** One or two sentences.
+
+**Approach.** What you did.
+
+**Outcome.** What changed.
+:::
+:::
+
+## Student-collaborative work
+
+<!-- Undergraduate research that produced something usable. This does double
+     duty: evidence of mentorship for your dossier, and evidence of applied
+     capability for a business reader. -->
+
+::: {.pub}
+[Undergraduate research · 2025]{.pub-venue}
+[Project title]{.pub-title}
+
+::: {.pub-authors}
+Built with Student Name. One or two sentences on what it does and what the
+student owned.
+:::
+::: {.pub-links}
+[Repository](https://github.com/)
+:::
+:::
+
+---
+
+If you are working on something similar, [see how I work with
+organizations](partnerships.qmd).

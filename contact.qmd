@@ -1,0 +1,75 @@
+---
+title: "Contact"
+page-layout: article
+---
+
+::: {.lede}
+The fastest way to reach me is email.
+:::
+
+[deroglu@brockport.edu](mailto:deroglu@brockport.edu)
+
+**Students:** please email me from your school (@brockport.edu) address so I can
+recognize your message and reply quickly.
+
+```{=html}
+<dl class="svc-list">
+  <div class="edu-row"><dt>Office</dt><dd>Brown Building 112, SUNY Brockport</dd></div>
+  <div class="edu-row"><dt>Office hours</dt><dd>Wednesdays, 10 am – 2 pm, or by appointment</dd></div>
+  <div class="edu-row"><dt>Phone</dt><dd>(585) 395-2196</dd></div>
+</dl>
+```
+
+<!-- Office hours change each semester — update the line above, or point to the
+     LMS and remove it. -->
+
+## Materials, partnerships, and projects
+
+For a material request — a dataset or working paper that isn't posted publicly —
+or a partnership or project inquiry, use the form below. Tell me what you have in
+mind and how you would use it, and I will follow up.
+
+<!-- WEB3FORMS SETUP — this form posts to Web3Forms. Paste your access key into
+     the value="" of the access_key hidden input below (marked with a comment).
+     The key is from your Web3Forms dashboard / signup email; it is designed to
+     live in public HTML, so committing it is fine. After deploying, send one
+     test submission and confirm it does not land in spam. -->
+
+```{=html}
+<form class="contact-form" action="https://api.web3forms.com/submit" method="POST">
+  <input type="hidden" name="access_key" value="0e767803-0eef-42bc-8272-cdcf482d61bf">
+  <input type="hidden" name="subject" value="New inquiry from deryaipek.com">
+  <!-- Spam honeypot — leave empty; real users never see it -->
+  <input type="checkbox" name="botcheck" style="display:none;" tabindex="-1" autocomplete="off">
+
+  <label for="name">Your name</label>
+  <input id="name" type="text" name="name" required>
+
+  <label for="email">Email</label>
+  <input id="email" type="email" name="email" required>
+
+  <label for="topic">Type of inquiry</label>
+  <select id="topic" name="topic">
+    <option>Material request</option>
+    <option>Partnership</option>
+    <option>Project</option>
+    <option>Other</option>
+  </select>
+
+  <label for="message">Your message</label>
+  <textarea id="message" name="message" rows="5" required></textarea>
+
+  <button type="submit">Send</button>
+</form>
+```
+
+## Elsewhere
+
+- [Google Scholar](https://scholar.google.com/citations?user=zIXyg9IAAAAJ)
+- [ORCID](https://orcid.org/0000-0002-6686-6662)
+- [ResearchGate](https://www.researchgate.net/profile/Derya-Ipek-Eroglu)
+- [SSRN](https://papers.ssrn.com/sol3/cf_dev/AbsByAuth.cfm?per_id=4077439)
+- [LinkedIn](https://www.linkedin.com/in/ipekeroglu/)
+- [Brockport profile](https://www.brockport.edu/live/profiles/6134-derya-ipek-eroglu)
+
+<!-- Delete any line you do not want public. -->

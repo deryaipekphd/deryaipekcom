@@ -1,0 +1,6 @@
+# Applies to every post in this folder — set it once here instead of in each file
+title-block-banner: false
+author: "Derya Ipek Eroglu"
+toc: false
+page-layout: article
+freeze: auto

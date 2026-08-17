@@ -1,0 +1,170 @@
+---
+title: "Derya Ipek Eroglu, Ph.D."
+page-layout: article
+---
+
+::: {.hero}
+
+```{=html}
+<img class="headshot" src="assets/headshot.jpg" width="132" height="132"
+     alt="Derya Ipek Eroglu, tenure-track faculty in Computing Sciences at SUNY Brockport">
+```
+
+::: {.hero-text}
+
+::: {.role}
+Tenure-track faculty · Computing Sciences · SUNY Brockport
+:::
+
+::: {.lede}
+I study how people and organizations make decisions about the computing systems
+they build and adopt — and what happens when those systems start making decisions
+back.
+:::
+
+::: {.profile-links}
+[Google Scholar](https://scholar.google.com/citations?user=zIXyg9IAAAAJ) [ORCID](https://orcid.org/0000-0002-6686-6662) [ResearchGate](https://www.researchgate.net/profile/Derya-Ipek-Eroglu) [SSRN](https://papers.ssrn.com/sol3/cf_dev/AbsByAuth.cfm?per_id=4077439) [LinkedIn](https://www.linkedin.com/in/ipekeroglu/) [Brockport](https://www.brockport.edu/live/profiles/6134-derya-ipek-eroglu)
+:::
+
+:::
+
+:::
+
+<!-- REPLACE the lede above with your own one-sentence framing. It is the first
+     thing a search committee reads. Make it specific to your work, not generic.
+     The photo is assets/headshot.jpg — swap that file to change it (keep the
+     name so the link stays put). -->
+
+My work sits in the overlap between technology and society: Digital Platforms,
+Text Analytics, and the wider problem of getting more out of data by
+understanding the systems that produce it. In practice that means Data Mining,
+Machine Learning, and Deep Learning — methods that have been around for decades
+and now travel under a single, overworked heading, *Artificial Intelligence*.
+What holds my attention is the meeting point of technology and language, and a
+passion for technology for good, whether it takes the form of Generative AI or of
+Platform Design.
+
+I am tenure-track faculty in the Department of Computing Sciences at
+[SUNY Brockport](https://www.brockport.edu), where I teach and advise students at
+both the undergraduate and graduate levels.
+
+My training is in Industrial Engineering, and it still shapes how I think: I
+approach systems with a big-picture lens, then get analytical about the details
+without letting that big picture slip to the back. Mostly I am looking for the
+system behind the symptom.
+
+## Research interests
+
+```{=html}
+<ul class="interests">
+  <li>Social Media Platforms &amp; Society</li>
+  <li>Persuasion in Social Media</li>
+  <li>Natural Language Processing</li>
+  <li>Representation Learning &amp; Text Analytics</li>
+  <li>Computational Social Science</li>
+  <li>Unsupervised Learning &amp; Clustering</li>
+  <li>Genetic Algorithms &amp; Heuristic Optimization</li>
+</ul>
+```
+
+<!-- Research-interest chips. Add or remove a <li> to change the set. -->
+
+## Education
+
+```{=html}
+<dl class="edu-list">
+  <div class="edu-row">
+    <dt>Ph.D. · 2023</dt>
+    <dd><strong>Business Information Technology</strong> — Virginia Tech
+      <span class="edu-note">Dissertation: <a href="https://vtechworks.lib.vt.edu/items/cbd84cc5-922e-4c66-adb7-b63aee3039f2"><em>Medium is the Message</em></a></span>
+    </dd>
+  </div>
+  <div class="edu-row">
+    <dt>M.S. · 2019</dt>
+    <dd><strong>Industrial Engineering</strong> — Middle East Technical University
+      <span class="edu-note">Thesis: <a href="https://open.metu.edu.tr/handle/11511/27931"><em>A Unified Approach for Center-Based Clustering on Networks</em></a></span>
+    </dd>
+  </div>
+  <div class="edu-row">
+    <dt>B.S. · 2015</dt>
+    <dd><strong>Industrial Engineering</strong> — Middle East Technical University
+      <span class="edu-note">magna cum laude</span>
+    </dd>
+  </div>
+</dl>
+```
+
+<!-- To add or edit a degree, copy a <div class="edu-row">…</div> block above.
+     dt = degree and year; dd = field and institution. -->
+
+## Awards
+
+```{=html}
+<dl class="svc-list">
+  <div class="edu-row">
+    <dt>2026</dt>
+    <dd><strong>Teacher of the Year</strong> — College of Arts &amp; Sciences, SUNY Brockport</dd>
+  </div>
+  <div class="edu-row">
+    <dt>2025</dt>
+    <dd><strong>Provost Faculty Fellowship for Project-Based Learning</strong> — SUNY Brockport</dd>
+  </div>
+  <div class="edu-row">
+    <dt>2022</dt>
+    <dd><strong>Outstanding Reviewer Award</strong> — 30th European Conference on Information Systems (ECIS)</dd>
+  </div>
+  <div class="edu-row">
+    <dt>2021</dt>
+    <dd><strong>Top 25% Paper Award</strong> — AMCIS 2021</dd>
+  </div>
+  <div class="edu-row">
+    <dt>2017</dt>
+    <dd><strong>Highest-Performing Master&rsquo;s Student</strong> — Department of Industrial Engineering, Middle East Technical University</dd>
+  </div>
+</dl>
+```
+
+<!-- Add an award: copy a <div class="edu-row">…</div> block. dt = year. -->
+
+## Teaching
+
+I teach across three areas, and can build courses into each:
+
+```{=html}
+<ul class="topics">
+  <li><span class="topic-name">Operations Research &amp; Management</span>Optimization, Linear and Network Programming, Decision Analysis, and Management Science.</li>
+  <li><span class="topic-name">Information Systems &amp; Business Analytics</span>Applied Statistics, Business Intelligence, Data Management, and Decision Support.</li>
+  <li><span class="topic-name">Programming &amp; Computation</span>Introductory and Object-Oriented Programming, Web Development, Scientific Computing, and Deep Learning.</li>
+</ul>
+```
+
+Full course list on the [Teaching](teaching.qmd) page.
+
+<!-- These are teaching AREAS for the About page; the detailed course list lives
+     on the Teaching page. Edit an area by changing a <li> above. -->
+
+## Professional service
+
+```{=html}
+<dl class="svc-list">
+  <div class="edu-row">
+    <dt>Memberships</dt>
+    <dd>Association for Information Systems (AIS), INFORMS (Data Mining Section), and the ACM.</dd>
+  </div>
+  <div class="edu-row">
+    <dt>Reviewing</dt>
+    <dd>AMCIS, the Academy of Management (AOM), ECIS, HICSS, ISCRAM, <em>Natural Hazards Review</em>, and <em>Annals of Operations Research</em>; session co-chair at INFORMS.</dd>
+  </div>
+  <div class="edu-row">
+    <dt>At Brockport</dt>
+    <dd>Advisor to the Women in Technology club; department social-media coordinator and content creator; Scholar&rsquo;s Day judge; and departmental service across student recruitment and engagement, accreditation, and personnel recognition.</dd>
+  </div>
+</dl>
+```
+
+<!-- To add a service row, copy a <div class="edu-row">…</div> block above.
+     dt = the category; dd = the detail. -->
+
+::: {.actions}
+[Full CV](cv.qmd) [Research](research.qmd) [Contact](contact.qmd)
+:::

@@ -1,0 +1,27 @@
+---
+title: "Curriculum Vitae"
+page-layout: article
+---
+
+::: {.lede}
+My full CV — publications, teaching, grants, awards, and service.
+:::
+
+::: {.actions}
+[Download CV (PDF)](assets/cv/DeryaIpekEroglu_CV.pdf)
+:::
+
+Last updated August 2026. The [Research](research.qmd) and [Teaching](teaching.qmd)
+pages cover the highlights; for anything else, [email me](contact.qmd).
+
+```{=html}
+<iframe class="pdf-frame" src="assets/cv/DeryaIpekEroglu_CV.pdf"
+        title="Curriculum Vitae — Derya Ipek Eroglu" loading="lazy"></iframe>
+```
+
+<!-- The button is the reliable download (works on phones); the embed previews
+     the PDF on desktop — some mobile browsers won't render it, which is fine,
+     the button covers them. To update the CV: replace the file in assets/cv/,
+     then change the filename in BOTH the link and the iframe above, plus the
+     "Last updated" date. Reusing one filename (drop the date) keeps old links
+     working. -->

@@ -1,0 +1,62 @@
+project:
+  type: website
+  output-dir: _site
+  # Case studies and Data & tools are deactivated for now (each also carries
+  # draft: true). This render list includes everything, then drops those two so
+  # no HTML is produced for them. To reactivate a page, delete its "!" line
+  # here and the draft flag in the file.
+  render:
+    - "*.qmd"
+    - "posts/**/*.qmd"
+    - "!case-studies.qmd"
+    - "!datasets.qmd"
+    - "!partnerships.qmd"
+  resources:
+    - CNAME
+    - assets/
+
+website:
+  # Site title (browser tab + metadata) uses English characters. The Turkish
+  # spelling is kept only for the top-left navbar brand below.
+  title: "Derya Ipek Eroglu"
+  site-url: "https://deryaipek.com"
+  description: "Tenure-track faculty in Computing Sciences at SUNY Brockport. Research on technology and society, digital platforms, and applied AI."
+  open-graph: true
+  twitter-card: false
+
+  navbar:
+    logo: ""
+    # Top-left brand — kept in Turkish spelling on purpose (see site title above).
+    title: "Derya İpek Eroğlu"
+    left:
+      - href: index.qmd
+        text: About
+      - text: Research
+        menu:
+          - href: research.qmd
+            text: Publications
+          - href: ongoing-projects.qmd
+            text: Ongoing Projects
+          - href: talks.qmd
+            text: Talks
+      - href: teaching.qmd
+        text: Teaching
+      - href: contact.qmd
+        text: Contact
+
+  page-footer:
+    left: "© 2026 Derya Ipek Eroglu"
+    right: "Built with [Quarto](https://quarto.org)"
+
+format:
+  html:
+    theme:
+      - styles.scss
+    toc: false
+    anchor-sections: true
+    link-external-newwindow: true
+    include-in-header:
+      - text: |
+          <link rel="preconnect" href="https://fonts.googleapis.com">
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+          <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&family=Fraunces:opsz,wght@9..144,400;9..144,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">

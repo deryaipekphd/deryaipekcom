@@ -1,0 +1,171 @@
+---
+title: "Research"
+page-layout: article
+---
+
+::: {.lede}
+My research examines the overlap of technology and society: Social Media
+Platforms and Persuasion, Text Analytics and Natural Language Processing, and the
+Machine Learning and Optimization methods behind them.
+:::
+
+[Google Scholar](https://scholar.google.com/citations?user=zIXyg9IAAAAJ) · [ORCID](https://orcid.org/0000-0002-6686-6662) · [ResearchGate](https://www.researchgate.net/profile/Derya-Ipek-Eroglu) · [SSRN](https://papers.ssrn.com/sol3/cf_dev/AbsByAuth.cfm?per_id=4077439)
+
+Full texts are linked where I can host them. If you hit a paywall, email me and I
+will send you a copy.
+
+<!-- HOW THIS PAGE WORKS
+     Each entry is a .pub block: .pub-venue (journal/conference and year, in
+     mono), .pub-title (the title), .pub-authors (byline — wrap YOUR name in
+     [D. I. Eroglu]{.me} so it reads bold), and an optional .pub-links block.
+     Keep a blank line before ::: {.pub-authors} or the inner block will not
+     render. Add a status pill with [Under review]{.tag} next to the venue.
+
+     Link order that reads well: DOI first, then a free-to-read copy (ResearchGate,
+     a repository PDF, arXiv), then code or data. To self-host an accepted
+     manuscript you may share, drop it in assets/papers/ and add
+     [PDF](assets/papers/name.pdf) to that entry's .pub-links. -->
+
+## Journal articles
+
+::: {.pub}
+[Geopolitics · 2025]{.pub-venue}
+[The Many Semantic Lives of Geopolitics: Evidence from the New York Times Archive, 1900–2023]{.pub-title}
+
+::: {.pub-authors}
+G. Toal and [D. I. Eroglu]{.me}
+:::
+
+::: {.pub-links}
+[DOI](https://doi.org/10.1080/14650045.2024.2411331) [ResearchGate](https://www.researchgate.net/publication/385087493_The_Many_Semantic_Lives_of_Geopolitics_Evidence_from_the_New_York_Times_Archive_1900-2023)
+:::
+:::
+
+::: {.pub}
+[Natural Hazards Review · 2021]{.pub-venue}
+[Quantifying the Role of Vulnerability in Hurricane Damage via a Machine Learning Case Study]{.pub-title}
+
+::: {.pub-authors}
+L. Szczyrba, Y. Zhang, D. Pamukcu, and [D. I. Eroglu]{.me}
+:::
+
+::: {.pub-links}
+[DOI](https://doi.org/10.1061/(ASCE)NH.1527-6996.0000460) [ResearchGate](https://www.researchgate.net/publication/353623393_Quantifying_the_Role_of_Vulnerability_in_Hurricane_Damage_via_a_Machine_Learning_Case_Study)
+:::
+:::
+
+## Conference proceedings
+
+::: {.pub}
+[IADIS Conference · 2026]{.pub-venue} [Forthcoming]{.tag}
+[Generative AI for Microenterprises: A Process Model for Growth]{.pub-title}
+
+::: {.pub-authors}
+[D. I. Eroglu]{.me}, M. Kamal, and M. L. Green
+:::
+
+::: {.pub-links}
+[ResearchGate](https://www.researchgate.net/publication/401709839_Generative_AI_for_Microenterprises_A_Process_Model_for_Growth) [SSRN](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6381178)
+:::
+:::
+
+::: {.pub}
+[AMCIS · 2025]{.pub-venue}
+[An Evolutionary AI Approach for Hub-Location Decisions: Leveraging Genetic Algorithms for Sustainable Supply Chains]{.pub-title}
+
+::: {.pub-authors}
+[D. I. Eroglu]{.me} and D. Pamukcu
+:::
+
+::: {.pub-links}
+[Proceedings](https://aisel.aisnet.org/amcis2025/data_science/sig_dsa/20) [PDF](https://aisel.aisnet.org/cgi/viewcontent.cgi?article=1268&context=amcis2025)
+:::
+:::
+
+::: {.pub}
+[AMCIS · 2021]{.pub-venue} [Top 25% Paper]{.tag}
+[Changing Views: Pre-suasion in a Reddit Discussion Community]{.pub-title}
+
+::: {.pub-authors}
+[D. I. Eroglu]{.me}, O. Seref, and M. M. H. Seref
+:::
+
+::: {.pub-links}
+[PDF](https://aisel.aisnet.org/cgi/viewcontent.cgi?article=1376&context=amcis2021)
+:::
+:::
+
+::: {.pub}
+[ISCRAM · 2020]{.pub-venue}
+[Analyzing and Contextualizing Social Vulnerability to Natural Disasters in Puerto Rico]{.pub-title}
+
+::: {.pub-authors}
+[D. I. Eroglu]{.me}, D. Pamukcu, L. Szczyrba, and Y. Zhang
+:::
+
+::: {.pub-links}
+[PDF](https://idl.iscram.org/files/deryaipekeroglu/2020/2238_DeryaIpekEroglu_etal2020.pdf)
+:::
+:::
+
+::: {.pub}
+[ISCRAM · 2020]{.pub-venue}
+[A Machine Learning Method to Quantify the Role of Vulnerability in Hurricane Damage]{.pub-title}
+
+::: {.pub-authors}
+L. Szczyrba, Y. Zhang, D. Pamukcu, and [D. I. Eroglu]{.me}
+:::
+
+::: {.pub-links}
+[PDF](https://par.nsf.gov/servlets/purl/10171051)
+:::
+:::
+
+## Under review
+
+::: {.pub}
+[Annals of Operations Research]{.pub-venue} [Under review]{.tag}
+[A Foundational Perspective for Partitional Clustering on Networks]{.pub-title}
+
+::: {.pub-authors}
+[D. I. Eroglu]{.me} and C. Iyigun
+:::
+
+::: {.pub-links}
+[arXiv](https://arxiv.org/abs/2607.25144)
+:::
+:::
+
+::: {.pub}
+[Information & Management]{.pub-venue} [Under review]{.tag}
+[Signals That Disarm: Persuasion Acknowledgments, Popularity Cues, and Audience Resistance in Online Discourse]{.pub-title}
+
+::: {.pub-authors}
+[D. I. Eroglu]{.me}, O. Seref, and M. M. H. Seref
+:::
+:::
+
+## Working papers
+
+::: {.pub}
+[In preparation]{.pub-venue}
+[Social Media Platforms from a Decision Science Lens: A Data-Driven Typology]{.pub-title}
+
+::: {.pub-authors}
+[D. I. Eroglu]{.me}, O. Seref, and M. M. H. Seref
+:::
+:::
+
+<!-- Working papers are listed as "In preparation" without a target venue. Add a
+     venue and an [Under review]{.tag} pill once a paper is actually submitted. -->
+
+## Elsewhere on this site
+
+- [Ongoing projects](ongoing-projects.qmd) — independent studies and research in progress
+- [Talks](talks.qmd) — invited talks, conference presentations, and workshops
+
+## Students
+
+I supervise undergraduate and graduate research, including summer projects. If
+you are a Brockport student interested in working on something in this space, get
+in touch before the term starts — the earlier the better.

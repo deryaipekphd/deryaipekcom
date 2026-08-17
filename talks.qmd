@@ -1,0 +1,63 @@
+---
+title: "Talks"
+page-layout: article
+---
+
+::: {.lede}
+Recorded conference talks. Full papers and links are on the [Research](research.qmd) page.
+:::
+
+::: {.talk}
+[IADIS Conference · 2026]{.eyebrow}
+[Generative AI for Microenterprises: A Process Model for Growth]{.talk-title}
+
+```{=html}
+<div class="video">
+  <iframe src="https://www.youtube-nocookie.com/embed/o8KmjWourlM"
+          title="Generative AI for Microenterprises: A Process Model for Growth"
+          loading="lazy"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerpolicy="strict-origin-when-cross-origin"
+          allowfullscreen></iframe>
+</div>
+```
+
+:::
+
+::: {.talk}
+[AMCIS · 2025]{.eyebrow}
+[An Evolutionary AI Approach for Hub-Location Decisions: Leveraging Genetic Algorithms for Sustainable Supply Chains]{.talk-title}
+
+```{=html}
+<div class="video">
+  <iframe src="https://www.youtube-nocookie.com/embed/x4APwbsYp5o"
+          title="An Evolutionary AI Approach for Hub-Location Decisions"
+          loading="lazy"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerpolicy="strict-origin-when-cross-origin"
+          allowfullscreen></iframe>
+</div>
+```
+
+:::
+
+::: {.talk}
+[ISCRAM · 2020]{.eyebrow}
+[Analyzing and Contextualizing Social Vulnerability to Natural Disasters in Puerto Rico]{.talk-title}
+
+```{=html}
+<div class="video">
+  <iframe src="https://www.youtube-nocookie.com/embed/g492IUrJJAc"
+          title="Analyzing and Contextualizing Social Vulnerability to Natural Disasters in Puerto Rico"
+          loading="lazy"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerpolicy="strict-origin-when-cross-origin"
+          allowfullscreen></iframe>
+</div>
+```
+
+:::
+
+<!-- To add a talk, copy a .talk block. The video ID is the part after
+     youtu.be/ or watch?v= in the URL — put it after /embed/ in the src, and
+     keep the blank lines around the ```{=html} block so it renders. -->

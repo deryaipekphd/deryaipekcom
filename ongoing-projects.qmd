@@ -1,0 +1,61 @@
+---
+title: "Ongoing Projects"
+page-layout: article
+---
+
+::: {.lede}
+Independent studies and applied research I am running now — several with students.
+:::
+
+These are works in progress. Where one turns into a paper or a dataset, I link it
+from the [Publications](research.qmd) page.
+
+::: {.pub}
+[Independent study · Spring 2026 – present]{.pub-venue}
+[Developer–AI Augmentation in Software Development]{.pub-title}
+
+::: {.pub-authors}
+How AI is shifting software development from writing code to specifying intent:
+human–AI collaboration models, their effect on developer workflows and cognition,
+and the trade-offs between efficiency gains and risks such as overreliance, reduced
+code comprehension, and security vulnerabilities in generated output.
+:::
+:::
+
+::: {.pub}
+[Independent study · Spring 2026]{.pub-venue}
+[Edge AI vs. Cloud AI: Performance, Latency, and Hybrid System Design]{.pub-title}
+
+::: {.pub-authors}
+A comparative analysis of Edge AI and Cloud AI architectures — latency, scalability,
+bandwidth, and data privacy — anchored in a Remaining Useful Life prediction task
+on the NASA C-MAPSS dataset, working toward hybrid Edge–Cloud designs.
+:::
+:::
+
+::: {.pub}
+[Independent study · Fall 2025 – present]{.pub-venue}
+[Data-Driven Soccer Analytics: Performance Determinants of Winning]{.pub-title}
+
+::: {.pub-authors}
+Match-level analysis of Brockport women's soccer to find what separates wins from
+non-wins — possession, territorial control, and attacking output — and the
+performance thresholds tied to a higher chance of winning.
+:::
+:::
+
+::: {.pub}
+[Independent study · Fall 2023 – present]{.pub-venue}
+[Analyzing Engagement and Growth in YouTube's Creator Economy]{.pub-title}
+
+::: {.pub-authors}
+How digital creators build audiences and monetize social capital: analyzing
+YouTube video data, descriptions, comments, and community engagement to inform
+data-driven content strategy.
+:::
+:::
+
+<!-- Each project is a .pub block: the venue eyebrow carries the type and dates,
+     the title is the project, and the .pub-authors block holds the description.
+     Copy one block to add a project. Keep the blank line before
+     ::: {.pub-authors} or the inner block will not render. -->

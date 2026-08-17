@@ -1,0 +1,18 @@
+---
+title: "Writing"
+page-layout: full
+draft: true   # unpublished for now — MVP; also removed from the navbar
+listing:
+  contents: posts
+  sort: "date desc"
+  type: default
+  categories: true
+  sort-ui: false
+  filter-ui: false
+  fields: [date, title, description, categories]
+  feed: true
+---
+
+::: {.lede}
+Notes on teaching, research practice, and the occasional thing I built.
+:::
