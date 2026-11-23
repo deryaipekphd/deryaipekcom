@@ -48,6 +48,8 @@ website:
         menu:
           - text: "Prereq Chain"
             href: /prereq-chains.html
+          - text: "Degree Planner"
+            href: /degree-planner.html
 
   page-footer:
     left: "© 2026 Derya Ipek Eroglu"
