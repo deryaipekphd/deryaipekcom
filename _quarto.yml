@@ -44,6 +44,10 @@ website:
         text: Teaching
       - href: contact.qmd
         text: Contact
+      - text: "Brockport Resources"
+        menu:
+          - text: "Prereq Chain"
+            href: /prereq-chains.html
 
   page-footer:
     left: "© 2026 Derya Ipek Eroglu"
