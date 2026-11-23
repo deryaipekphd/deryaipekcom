@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Computing Sciences prerequisite chains</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Sans+Condensed:wght@600&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: a working chart for an advisor. Tabs pick a major, the chart fills the width,
+   the critical path runs along the top row in vermilion, everything else stays quiet. */
+:root {
+  --paper: #f5f7f4; --surface: #ffffff; --ink: #18241e; --muted: #5b6a62; --line: #d5dcd6; --line-strong: #9aa8a0;
+  --brand: #0b5a43; --brand-soft: #dcebe4; --crit: #c5371c; --on-crit: #ffffff; --crit-soft: #fbe6e0;
+  --warn: #8a6400; --warn-soft: #fbf1d2; --band-a: #edf1ed; --band-b: #f9faf8;
+  --cis: #2b6cb0; --cyb: #7c4ab8; --csc: #0f8a5f;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-node: "IBM Plex Sans Condensed", "IBM Plex Sans", "Arial Narrow", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper: #111815; --surface: #1a2420; --ink: #e7eeea; --muted: #9db0a6; --line: #2e3c35; --line-strong: #5d7067;
+    --brand: #6fd0ac; --brand-soft: #1f3a30; --crit: #ff7b5a; --on-crit: #1b0d08; --crit-soft: #3a1c14;
+    --warn: #e6bd45; --warn-soft: #362c10; --band-a: #161f1b; --band-b: #1c2622;
+    --cis: #6fa8e6; --cyb: #b592ea; --csc: #55c79b;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #111815; --surface: #1a2420; --ink: #e7eeea; --muted: #9db0a6; --line: #2e3c35; --line-strong: #5d7067;
+  --brand: #6fd0ac; --brand-soft: #1f3a30; --crit: #ff7b5a; --on-crit: #1b0d08; --crit-soft: #3a1c14;
+  --warn: #e6bd45; --warn-soft: #362c10; --band-a: #161f1b; --band-b: #1c2622;
+  --cis: #6fa8e6; --cyb: #b592ea; --csc: #55c79b;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1280px; margin: 0 auto; padding: 24px 20px 40px; display: flex; flex-direction: column; gap: 18px; }
+header h1 { font-size: 26px; line-height: 1.15; margin: 0 0 4px; font-weight: 600; letter-spacing: -0.01em; text-wrap: balance; }
+header p { margin: 0; color: var(--muted); max-width: 70ch; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; border-bottom: 1px solid var(--line); padding-bottom: 10px; }
+.tabs button, .seg button { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+.tabs button:hover, .seg button:hover { border-color: var(--line-strong); }
+.tabs button[aria-selected="true"] { background: var(--brand); border-color: var(--brand); color: var(--surface); font-weight: 600; }
+button:focus-visible, .node:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.controls { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; }
+.controls[hidden] { display: none; }
+.ctl { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 14px; }
+.seg { display: inline-flex; }
+.seg button { border-radius: 0; margin-left: -1px; padding: 4px 11px; font-size: 14px; }
+.seg button:first-child { border-radius: 6px 0 0 6px; margin-left: 0; }
+.seg button:last-child { border-radius: 0 6px 6px 0; }
+.seg button[aria-pressed="true"] { background: var(--brand-soft); border-color: var(--brand); color: var(--ink); font-weight: 600; position: relative; z-index: 1; }
+.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+.stat .k { color: var(--muted); font-size: 13px; }
+.stat .v { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.25; }
+.stat .v small { font-size: 14px; font-weight: 400; color: var(--muted); }
+.stat.alert { border-color: var(--crit); background: var(--crit-soft); }
+.path { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--crit); border-radius: 8px; padding: 12px 14px; }
+.path h2, .detail h2, .notes h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
+.steps { display: flex; flex-wrap: wrap; gap: 6px 4px; align-items: stretch; }
+.step { display: flex; flex-direction: column; gap: 2px; padding: 4px 10px; border-radius: 6px; background: var(--crit-soft); }
+.step .s { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+.step .c { font-family: var(--font-node); font-weight: 600; font-size: 14.5px; }
+.arrow { align-self: center; color: var(--crit); font-weight: 600; padding: 0 2px; }
+.warns { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.warns li { background: var(--warn-soft); border-radius: 6px; padding: 6px 10px; font-size: 14px; }
+.warns li b { color: var(--warn); }
+figure { position: relative; margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.scroll { overflow-x: auto; padding: 12px; }
+svg#chart { display: block; height: auto; }
+figcaption { border-top: 1px solid var(--line); padding: 10px 14px; color: var(--muted); font-size: 14px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; padding: 10px 14px 12px; font-size: 13.5px; color: var(--muted); border-top: 1px solid var(--line); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend svg { flex: none; }
+.lower { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 14px; }
+@media (max-width: 820px) { .lower { grid-template-columns: 1fr; } }
+.detail, .notes { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; }
+.detail h3 { margin: 0 0 2px; font-size: 18px; font-weight: 600; }
+.detail .sub { color: var(--muted); margin: 0 0 10px; }
+.detail dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 0; font-size: 14.5px; }
+.detail dt { color: var(--muted); }
+.detail dd { margin: 0; }
+.notes ul { margin: 0; padding-left: 18px; font-size: 14px; color: var(--muted); }
+.notes li + li { margin-top: 4px; }
+/* chart */
+.band-a { fill: var(--band-a); } .band-b { fill: var(--band-b); }
+.colhead { font-family: var(--font-mono); font-size: 11.5px; fill: var(--ink); font-weight: 600; }
+.colsub { font-family: var(--font-mono); font-size: 10.5px; fill: var(--muted); }
+.striplabel { font-family: var(--font-mono); font-size: 10.5px; fill: var(--muted); }
+.bandline { stroke: var(--line); stroke-width: 1; stroke-dasharray: 2 4; fill: none; }
+.edge { fill: none; stroke: var(--line-strong); stroke-width: 1.2; }
+.edge.alt { stroke-dasharray: 5 4; }
+.edge.co { stroke-dasharray: 1.5 3.5; stroke-linecap: round; stroke-width: 1.8; }
+.edge.crit { stroke: var(--crit); stroke-width: 2.6; }
+.mk { fill: var(--line-strong); } .mk-crit { fill: var(--crit); }
+.node { cursor: pointer; }
+.node rect.box { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1.2; }
+.node.el rect.box { stroke-dasharray: 5 3; }
+.node.support rect.box { stroke-dasharray: 1.5 3; }
+.node.crit rect.box { fill: var(--crit); stroke: var(--crit); }
+.node .code { font-family: var(--font-node); font-size: 13.5px; font-weight: 600; fill: var(--ink); }
+.node .term { font-family: var(--font-mono); font-size: 10.5px; fill: var(--muted); }
+.node .term.odd { fill: var(--warn); font-weight: 600; }
+.node.crit .code, .node.crit .term, .node.crit .term.odd { fill: var(--on-crit); }
+.node.sel rect.box { stroke: var(--ink); stroke-width: 2.4; }
+.pip-CIS { fill: var(--cis); stroke: var(--cis); } .pip-CYB { fill: var(--cyb); stroke: var(--cyb); } .pip-CSC { fill: var(--csc); stroke: var(--csc); }
+.pip.ring { fill: var(--surface); stroke-width: 1.6; }
+svg.focus .node:not(.on) { opacity: 0.28; }
+svg.focus .edge:not(.on) { opacity: 0.1; }
+svg.focus .edge.on:not(.crit) { stroke: var(--ink); stroke-width: 1.7; }
+@media (prefers-reduced-motion: no-preference) { .node, .edge { transition: opacity 0.12s; } }
+
+.about { margin: 0 0 8px; max-width: 65ch; }
+.src { margin: 0 0 10px; font-size: 13.5px; color: var(--muted); }
+.src a, .pop a { color: var(--brand); }
+.pop { position: absolute; z-index: 5; width: min(340px, calc(100% - 16px)); background: var(--surface); color: var(--ink); border: 1px solid var(--line-strong); border-radius: 8px; padding: 12px 14px 10px; box-shadow: 0 6px 22px rgba(10, 30, 20, 0.18); font-size: 14px; line-height: 1.45; }
+.pop[hidden] { display: none; }
+.pop h3 { margin: 0 26px 0 0; font-size: 16px; font-weight: 600; }
+.pop .sub { margin: 0 0 8px; color: var(--muted); font-size: 13px; }
+.pop .about { margin: 0 0 8px; }
+.pop .pre { margin: 0 0 8px; font-size: 13.5px; }
+.pop .pre b { font-weight: 600; color: var(--muted); margin-right: 4px; }
+.pop .src { margin: 0; font-size: 13px; }
+.pop button { position: absolute; top: 6px; right: 6px; width: 26px; height: 26px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); font: inherit; font-size: 18px; line-height: 1; cursor: pointer; }
+.pop button:hover { background: var(--band-a); color: var(--ink); }
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Computing Sciences prerequisite chains</h1>
+    <p>CIS, CYB and CSC majors at SUNY Brockport, with the critical path for each. Data from the advising catalog sheet, revision 78, 23 November 2026.</p>
+  </header>
+  <div class="tabs" id="tabs" role="tablist" aria-label="Major"></div>
+  <div class="controls" id="controls" hidden>
+    <div class="ctl"><span id="lbl-math">First math course</span><span class="seg" role="group" aria-labelledby="lbl-math"><button type="button" id="math-111" data-k="math" data-v="111">MTH 111</button><button type="button" id="math-122" data-k="math" data-v="122">MTH 122</button></span></div>
+    <div class="ctl"><span id="lbl-start">First semester</span><span class="seg" role="group" aria-labelledby="lbl-start"><button type="button" id="start-f" data-k="start" data-v="F">Fall</button><button type="button" id="start-s" data-k="start" data-v="S">Spring</button></span></div>
+  </div>
+  <div class="summary" id="summary"></div>
+  <div class="path" id="path" hidden></div>
+  <figure>
+    <div class="scroll"><svg id="chart" role="group" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    <div class="pop" id="pop" role="dialog" aria-label="Course summary" hidden><button type="button" id="pop-close" aria-label="Close">×</button><div id="pop-body"></div></div>
+    <div class="legend" aria-label="Legend">
+      <span><svg width="26" height="14" aria-hidden="true"><rect class="box" x="1" y="1" width="24" height="12" rx="3" style="fill:var(--crit);stroke:var(--crit)"/></svg>Critical path</span>
+      <span><svg width="26" height="14" aria-hidden="true"><rect x="1" y="1" width="24" height="12" rx="3" style="fill:var(--surface);stroke:var(--line-strong);stroke-width:1.2"/></svg>Required</span>
+      <span><svg width="26" height="14" aria-hidden="true"><rect x="1" y="1" width="24" height="12" rx="3" style="fill:var(--surface);stroke:var(--line-strong);stroke-width:1.2;stroke-dasharray:5 3"/></svg>Elective option</span>
+      <span><svg width="28" height="14" aria-hidden="true"><path d="M1 7H27" style="stroke:var(--line-strong);stroke-width:1.2"/></svg>Prerequisite</span>
+      <span><svg width="28" height="14" aria-hidden="true"><path d="M1 7H27" style="stroke:var(--line-strong);stroke-width:1.2;stroke-dasharray:5 4"/></svg>One of several accepted</span>
+      <span><svg width="28" height="14" aria-hidden="true"><path d="M1 7H27" style="stroke:var(--line-strong);stroke-width:1.8;stroke-dasharray:1.5 3.5;stroke-linecap:round"/></svg>Corequisite</span>
+      <span><b style="font-family:var(--font-mono);font-weight:600">F / S</b>&nbsp;fall only, spring only</span>
+      <span><b style="font-family:var(--font-mono);font-weight:600;color:var(--warn)">irr / ?</b>&nbsp;irregular, unknown</span>
+      <span><svg width="34" height="14" aria-hidden="true"><circle class="pip pip-CIS" cx="6" cy="7" r="3.4"/><circle class="pip pip-CYB" cx="17" cy="7" r="3.4"/><circle class="pip pip-CSC" cx="28" cy="7" r="3.4"/></svg>CIS, CYB, CSC (ring: elective only)</span>
+    </div>
+    <figcaption id="cap"></figcaption>
+  </figure>
+  <div class="lower">
+    <section class="detail" id="detail" aria-live="polite"></section>
+    <section class="notes">
+      <h2>How to read the timing</h2>
+      <ul>
+        <li>The critical path is the chain with the least slack against an eight-semester finish. A course is on it when it sets the earliest date of the next one.</li>
+        <li>Earliest semesters follow prerequisites and offering terms only. Credit load, summer and winter terms, waivers and transfer credit are ignored.</li>
+        <li>Irregular and unlisted offerings are drawn as if they ran every semester.</li>
+        <li>Junior standing is counted as semester 5 and sophomore standing as semester 3. CSC 356 follows the soft rule of semester 5 on.</li>
+        <li>Electives are drawn but do not enter the critical path.</li>
+        <li>Course summaries are condensed from the 2026-27 catalog listings, read on 23 November 2026. They are not the catalog's wording; each links to the full entry.</li>
+      </ul>
+    </section>
+  </div>
+</div>
+<script>
+// Data snapshot: "Computing Sciences advising catalog data" sheet, revision 78 (2026-11-23).
+// pre: AND of OR-groups. co: corequisites. off: FS | F | S | IRR | UNK. minSem: standing gate.
+const COURSES = {
+  "MTH 111": { t: "College Algebra", cr: 3, off: "FS", pre: [] },
+  "MTH 122": { t: "Pre-Calculus", cr: 4, off: "FS", pre: [["MTH 111"]], raw: "MTH 111 or instructor's permission" },
+  "MTH 201": { t: "Calculus I", cr: 4, off: "FS", pre: [["MTH 122"]] },
+  "MTH 202": { t: "Calculus II", cr: 4, off: "FS", pre: [["MTH 201"]] },
+  "MTH 243": { t: "Elementary Statistics", cr: 3, off: "FS", pre: [], raw: "MTH 110 or higher (treated as placement)" },
+  "MTH 281": { t: "Discrete Mathematics I", cr: 4, off: "FS", pre: [["MTH 122"]], raw: "MTH 122 or MTH 201/202/203" },
+  "MTH 481": { t: "Discrete Mathematics II", cr: 3, off: "FS", pre: [["MTH 201"], ["MTH 281"]] },
+  "CSC 120": { t: "Introduction to Computing", cr: 4, off: "FS", pre: [["MTH 111"]], raw: "MTH 111 or higher" },
+  "CSC 203": { t: "Problem Solving with Objects", cr: 4, off: "FS", pre: [["CSC 120"], ["MTH 122"]] },
+  "CSC 205": { t: "Fundamentals of Data Structures", cr: 4, off: "FS", pre: [["CSC 203"], ["MTH 281"]] },
+  "CSC 209": { t: "UNIX Tools", cr: 1, off: "FS", pre: [["CSC 203", "CYB 203"]] },
+  "CSC 219": { t: "Programming in C", cr: 1, off: "FS", pre: [["CSC 203", "CYB 203"]] },
+  "CSC 311": { t: "Computer Organization and Architecture", cr: 4, off: "FS", pre: [["CSC 203"], ["MTH 281"]] },
+  "CSC 312": { t: "Cybersecurity", cr: 3, off: "FS", pre: [["CSC 209"], ["CSC 311", "CIS 303"]] },
+  "CSC 356": { t: "Life in the Digital Age", cr: 3, off: "FS", pre: [], minSem: 5, raw: "None. Soft rule: recommended from the 5th semester" },
+  "CSC 386": { t: "Junior/Senior Seminar", cr: 3, off: "FS", pre: [], minSem: 5, raw: "Junior or higher; CSC, CIS or CYB major" },
+  "CSC 401": { t: "Programming Languages", cr: 3, off: "F", pre: [["CSC 205"], ["CSC 219"], ["CSC 311"]] },
+  "CSC 406": { t: "Algorithms and Data Structures", cr: 3, off: "S", pre: [["CSC 205"], ["MTH 481"]] },
+  "CSC 414": { t: "Operating Systems and Parallel Computing", cr: 3, off: "S", pre: [["CSC 209"], ["CSC 219"], ["CSC 311"]] },
+  "CSC 423": { t: "Web Application Development", cr: 3, off: "F", pre: [["CSC 209"], ["CIS 422"]] },
+  "CSC 427": { t: "Software Systems Engineering", cr: 3, off: "FS", pre: [["CSC 205"]] },
+  "CSC 429": { t: "Object-Oriented Software Development", cr: 3, off: "S", pre: [["CSC 427"]] },
+  "CSC 434": { t: "Artificial Intelligence and Machine Learning", cr: 3, off: "F", pre: [["CSC 205"]] },
+  "CSC 435": { t: "Data Analytics and Predictive Modeling", cr: 3, off: "S", pre: [["CSC 205"]], label: "CIS/CSC 435", raw: "CSC 205. Cross-listed, counts once (flag 12)" },
+  "CSC 483": { t: "Theory of Computation", cr: 3, off: "S", pre: [["CSC 203"], ["MTH 481"]] },
+  "CIS 102": { t: "Fundamentals of Information Systems", cr: 3, off: "FS", pre: [] },
+  "CIS 116": { t: "Introduction to Excel", cr: 1, off: "F", pre: [], raw: "None. Waivable for experience" },
+  "CIS 117": { t: "Introduction to Web Development", cr: 1, off: "FS", pre: [], raw: "None. Waivable for experience" },
+  "CIS 206": { t: "Information Technology Tools", cr: 1, off: "S", pre: [["CIS 116"]], raw: "CIS 116. Waivable for experience" },
+  "CIS 303": { t: "IT Hardware and Software", cr: 3, off: "F", pre: [["CSC 203", "CYB 203"], ["MTH 281"]] },
+  "CIS 309": { t: "IT Hardware and Networking Lab", cr: 1, off: "FS", pre: [["CIS 303", "CSC 311"]] },
+  "CIS 317": { t: "Analysis and Logical Design of IS", cr: 4, off: "F", pre: [["CIS 102"], ["CIS 206"], ["CSC 203"]] },
+  "CIS 404": { t: "Multimedia and HCI", cr: 3, off: "S", pre: [["CSC 209"], ["CIS 317"]] },
+  "CIS 419": { t: "Computer Networks and Internet Applications", cr: 3, off: "FS", pre: [["CSC 209"], ["CSC 203", "CSC 219"]] },
+  "CIS 421": { t: "Computer and Network Security", cr: 3, off: "F", pre: [["CIS 419"]] },
+  "CIS 422": { t: "Physical Design and Implementation with DBMS", cr: 3, off: "FS", pre: [["CSC 205"]] },
+  "CIS 427": { t: "Project Management and Practice", cr: 3, off: "S", pre: [["CIS 317"]] },
+  "CIS 434": { t: "Decision Support and Expert Systems", cr: 3, off: "IRR", pre: [["CIS 317"], ["MTH 243"]] },
+  "CIS 436": { t: "Data Mining", cr: 3, off: "IRR", pre: [["CIS 422"], ["MTH 243"]] },
+  "CIS 442": { t: "Electronic Commerce Systems", cr: 3, off: "F", pre: [["CSC 209"], ["CIS 422"], ["CIS 117"]] },
+  "CIS 446": { t: "Principles of Cloud Computing", cr: 3, off: "F", pre: [["CSC 205"], ["CSC 209"], ["CIS 419"]] },
+  "CIS 472": { t: "Enterprise Architecture and IS Strategy", cr: 3, off: "S", pre: [["CIS 317"], ["CIS 419"], ["ACC"], ["BUS 366"]], co: ["CIS 422", "CIS 427"], raw: "CIS 317, CIS 419, ACC 280, BUS 365; corequisites CIS 422 and CIS 427 (flags 5, 6)" },
+  "CIS 487": { t: "Information Technology for Development", cr: 3, off: "IRR", pre: [], minSem: 5, raw: "Junior status; CIS major or minor" },
+  "CYB 105": { t: "Cybersecurity Fundamentals I", cr: 3, off: "FS", pre: [["CIS 102"]] },
+  "CYB 203": { t: "Programming in Python", cr: 4, off: "IRR", pre: [["CSC 120"]] },
+  "CYB 205": { t: "Cybersecurity Fundamentals II", cr: 3, off: "FS", pre: [["CYB 105"]] },
+  "CYB 401": { t: "Ethical Hacking", cr: 3, off: "F", pre: [["CIS 419"]] },
+  "CYB 403": { t: "Enterprise Security and Firewalls", cr: 3, off: "F", pre: [["CYB 205"], ["CIS 419"]] },
+  "CYB 405": { t: "Database and Web Security", cr: 3, off: "S", pre: [["CYB 203", "CSC 203"]] },
+  "CYB 418": { t: "Information Assurance & Incident Response", cr: 3, off: "FS", pre: [["CIS 102"], ["CIS 303"], ["CIS 419"]] },
+  "ECN 100": { t: "Contemporary Economic Issues", cr: 3, off: "FS", pre: [] },
+  "ACC": { t: "Accounting: ACC 280, 281 or 282", cr: 3, off: "FS", pre: [], label: "ACC 28x", raw: "ACC 281: none. ACC 280: MTH 111. ACC 282: ACC 281 (flag 6)" },
+  "BUS 325": { t: "Principles of Finance", cr: 3, off: "FS", pre: [["ACC"], ["ECN 100"], ["MTH 243"]], raw: "For CIS majors: accounting course, ECN 100 and MTH 243" },
+  "BUS 335": { t: "Principles of Marketing", cr: 3, off: "FS", pre: [], minSem: 3, raw: "Sophomore status" },
+  "BUS 366": { t: "Organizational Behavior (stands in for BUS 365)", cr: 3, off: "FS", pre: [], minSem: 3, raw: "Sophomore status (flag 5)" },
+  "HCS 310": { t: "Healthcare Systems", cr: 3, off: "FS", pre: [] },
+  "HCS 464": { t: "Operations Management in Healthcare", cr: 3, off: "UNK", pre: [], co: ["HCS 310"], raw: "Corequisite HCS 310" },
+  "CRJ 101": { t: "Introduction to Criminal Justice", cr: 3, off: "FS", pre: [] },
+  "CRJ 422": { t: "Cybercrime and Digital Forensics", cr: 3, off: "UNK", pre: [["CRJ 101"]] }
+};
+
+const CIS_CORE = ["MTH 111","MTH 122","CSC 120","CIS 116","ECN 100","CSC 203","CSC 205","CSC 209","CSC 312","CSC 356","CSC 386","CIS 102","CIS 117","CIS 206","CIS 303","CIS 309","CIS 317","CIS 419","CIS 422","CIS 427","CIS 442","CIS 472","MTH 243","MTH 281","ACC","BUS 366"];
+const CIS_EL = ["CIS 404","CIS 421","CIS 434","CSC 435","CIS 436","CIS 446","CIS 487"];
+const CSC_PROJ = ["CSC 423","CSC 429","CSC 434","CSC 435"];
+const PROGRAMS = {
+  "cis-business": { name: "CIS, Business", major: "CIS", math: "122", req: CIS_CORE.concat(["BUS 325","BUS 335"]), el: CIS_EL, elNote: "Electives: choose 2 from CIS 400-489." },
+  "cis-healthcare": { name: "CIS, Healthcare", major: "CIS", math: "122", req: CIS_CORE.concat(["HCS 310","HCS 464"]), el: CIS_EL, elNote: "Electives: choose 2 from CIS 400-489." },
+  "cyb": { name: "CYB", major: "CYB", math: "111", req: ["MTH 111","MTH 122","CSC 120","CYB 105","CYB 203","CYB 205","CYB 401","CYB 403","CYB 405","CYB 418","CIS 102","CIS 117","CIS 303","CIS 309","CIS 419","CIS 421","CSC 209","CSC 219","CSC 356","CSC 386","MTH 243","MTH 281","CRJ 101","CRJ 422"], el: [], elNote: "Elective: 1 course from CIS or CSC 400-489 or a CYB elective, not drawn." },
+  "csc-advanced": { name: "CSC, Advanced Computing", major: "CSC", math: "122", req: ["MTH 111","MTH 122","CSC 120","CIS 117","CSC 203","CSC 205","CSC 209","CSC 219","CSC 311","CSC 312","CSC 356","CSC 386","CSC 401","CSC 406","CSC 414","CIS 419","CIS 422","CSC 427","CSC 483","MTH 201","MTH 202","MTH 281","MTH 481"], el: CSC_PROJ, elNote: "Project elective: choose 1 of CSC 423, 429, 434, 435. Two lab sciences are not drawn." },
+  "csc-software": { name: "CSC, Software Development", major: "CSC", math: "122", req: ["MTH 111","MTH 122","CSC 120","CIS 117","CSC 203","CSC 205","CSC 209","CSC 219","CSC 311","CSC 312","CSC 356","CSC 386","CSC 401","CSC 406","CSC 427","MTH 201","MTH 281","MTH 481"], el: CSC_PROJ.concat(["CSC 414","CSC 483","CIS 419","CIS 421"]), elNote: "Electives: 1 project course (CSC 423, 429, 434, 435) plus 4 from CSC 400-489, CIS 419 or CIS 421. CSC 423 also needs CIS 422." }
+};
+
+function analyze(progKey, opts) {
+  const P = PROGRAMS[progKey];
+  const math = opts.math || P.math, start = opts.start || "F";
+  const skip = math === "122" ? new Set(["MTH 111"]) : new Set();
+  const req = P.req.filter(c => !skip.has(c));
+  const reqSet = new Set(req);
+  const isFall = s => (s % 2 === 1) === (start === "F");
+  const offered = (c, s) => { const o = COURSES[c].off; return o === "F" ? isFall(s) : o === "S" ? !isFall(s) : true; };
+  const nextOff = (c, s) => { while (!offered(c, s)) s++; return s; };
+  const prevOff = (c, s) => { while (s > 0 && !offered(c, s)) s--; return s; };
+  // nodes shown: required + electives + what electives need
+  const shown = new Set(req);
+  const support = new Set();
+  const es = {}, res = {};
+  function resolve(c) { // pick one alternative per OR group
+    if (res[c]) return res[c];
+    const out = [];
+    for (const grp of COURSES[c].pre) {
+      const g = grp.filter(x => !skip.has(x));
+      if (!g.length) continue;
+      let pick = g.filter(x => reqSet.has(x));
+      if (!pick.length) pick = g.filter(x => P.el.includes(x));
+      if (!pick.length) pick = [g[0]];
+      pick.sort((a, b) => ES(a) - ES(b));
+      out.push(pick[0]);
+    }
+    return (res[c] = out);
+  }
+  function ES(c) {
+    if (es[c] != null) return es[c];
+    let s = COURSES[c].minSem || 1;
+    for (const p of resolve(c)) s = Math.max(s, ES(p) + 1);
+    for (const q of (COURSES[c].co || [])) s = Math.max(s, ES(q));
+    return (es[c] = nextOff(c, s));
+  }
+  req.forEach(ES);
+  for (const e of P.el) { ES(e); shown.add(e); }
+  // add support courses that electives need
+  let grew = true;
+  while (grew) { grew = false; for (const c of [...shown]) for (const p of resolve(c).concat(COURSES[c].co || [])) if (!shown.has(p)) { shown.add(p); support.add(p); grew = true; } }
+  const edges = [];
+  for (const c of shown) {
+    for (const p of resolve(c)) edges.push({ from: p, to: c, co: false });
+    for (const q of (COURSES[c].co || [])) edges.push({ from: q, to: c, co: true });
+  }
+  const T = Math.max(...req.map(c => es[c]));
+  // latest semester for a finish in H semesters (required courses only)
+  function latest(H) {
+    const ls = {};
+    const deps = c => edges.filter(e => e.from === c && reqSet.has(e.to));
+    function LS(c) {
+      if (ls[c] != null) return ls[c];
+      let s = H;
+      for (const e of deps(c)) s = Math.min(s, e.co ? LS(e.to) : LS(e.to) - 1);
+      return (ls[c] = prevOff(c, s));
+    }
+    req.forEach(LS);
+    return ls;
+  }
+  const H = Math.max(8, T);
+  const ls = latest(H);
+  // Critical chain(s) against an H-semester deadline: start at the chained required courses with the
+  // least slack, then walk back through the prerequisite(s) that set each course's earliest date.
+  const slack = {}; req.forEach(c => slack[c] = ls[c] - es[c]);
+  const chained = req.filter(c => edges.some(e => (e.to === c && reqSet.has(e.from)) || (e.from === c && reqSet.has(e.to))));
+  const minSlack = Math.min(...chained.map(c => slack[c]));
+  const crit = new Set(), critEdges = new Set();
+  function walk(c) {
+    if (crit.has(c)) return; crit.add(c);
+    const ins = edges.filter(e => e.to === c && reqSet.has(e.from));
+    if (!ins.length) return;
+    const val = e => e.co ? es[e.from] : es[e.from] + 1;
+    const m = Math.max(...ins.map(val));
+    if ((COURSES[c].minSem || 1) > m) return; // set by class standing, not by a course
+    for (const e of ins) if (val(e) === m) { critEdges.add(e.from + ">" + e.to); walk(e.from); }
+  }
+  for (const c of chained) if (slack[c] === minSlack) walk(c);
+  return { P, math, start, req, reqSet, shown, support, es, ls, slack, minSlack, T, H, edges, crit, critEdges, isFall };
+}
+
+if (typeof module !== "undefined") module.exports = { COURSES, PROGRAMS, analyze };
+
+</script>
+<script>
+// Short summaries written from the 2026-27 SUNY Brockport catalog course listings (read 2026-11-23).
+// They are condensed, not the catalog's wording; the link in the panel opens the full entry.
+const CATALOG = { CSC: "Computer Science", CIS: "Computer Information Systems", CYB: "Cybersecurity", MTH: "Math", ECN: "Economics", ACC: "Accounting", BUS: "Business", HCS: "Healthcare Studies", CRJ: "Criminal Justice" };
+const DESC = {
+  "MTH 111": "Algebra: polynomials and algebraic fractions, linear and quadratic equations, graphs of functions, exponentials and logarithms.",
+  "MTH 122": "Algebraic, exponential, logarithmic and trigonometric functions, as preparation for calculus.",
+  "MTH 201": "Limits, continuity, and derivatives and integrals of the elementary functions, with applications of the derivative.",
+  "MTH 202": "Integration techniques and applications, approximation, Taylor polynomials, improper integrals, polar coordinates and a first look at series.",
+  "MTH 243": "Descriptive statistics, the normal and t distributions, sampling and estimation, significance tests for means, and correlation.",
+  "MTH 281": "Logic, sets and functions, matrices, proof techniques including induction, counting, and discrete probability.",
+  "MTH 481": "Algorithms, recurrence relations, inclusion-exclusion, order and equivalence relations, and graph theory including trees.",
+  "CSC 120": "First programming course, taught in Java: how programs are developed and translated, data types, variables, selection, loops and methods, plus secure coding and the social and legal side of computing.",
+  "CSC 203": "Object-oriented programming and basic algorithms: classes, methods, recursion, arrays, file I/O, inheritance, polymorphism, testing, simple GUIs, sorting and searching. Programming-heavy, with supervised labs.",
+  "CSC 205": "Abstract data types and the classic structures (stacks, queues, linked lists, binary trees), with recursion, sorting, searching, algorithm analysis and event-driven GUIs. Supervised labs.",
+  "CSC 209": "Working at the UNIX command line: the file system, shells, pipes and redirection, permissions, processes, shell scripting, and tools such as sed, grep and make.",
+  "CSC 219": "C programming: control structures, pointers and pointer arithmetic, strings, structs and unions, functions, command-line arguments and bit operations.",
+  "CSC 311": "How a computer works beneath the software: digital logic, data representation, CPU and ALU design, instruction execution, addressing modes, memory, and assembly programming. Supervised labs.",
+  "CSC 312": "Core security concepts: attackers, confidentiality, integrity and availability, access control, vulnerabilities, exploitation and defense, reverse engineering, malware, applied cryptography, and legal and ethical issues.",
+  "CSC 356": "Technology and society: privacy and surveillance, online communication, free expression and censorship, and how computing changes work and home life.",
+  "CSC 386": "Professional seminar: computing ethics and history, reading the professional literature, job searches and interviews, and career paths. Built on writing, discussion and oral presentations.",
+  "CSC 401": "How programming languages are designed and implemented: syntax and semantics, compilation and interpretation, binding and scope, parameter passing, and the procedural, object-oriented, functional, logic and scripting paradigms.",
+  "CSC 406": "Advanced data structures and algorithm design: complexity, hashing, union-find, balanced trees and B-trees, graphs, design strategies and NP-completeness.",
+  "CSC 414": "Operating system internals (processes, threads, scheduling, memory, concurrency) together with parallel architectures and problem decomposition. Swing course with CSC 514.",
+  "CSC 423": "Building database-backed web applications: HTTP, markup and CSS, client-side and server-side code, database access, and separating model from view. Team project.",
+  "CSC 427": "Software engineering across the life cycle: process models, estimation, requirements, design, testing, maintenance and documentation. Teams build a large software product.",
+  "CSC 429": "Object-oriented design in Java: UML, interfaces and abstract classes, GUI and event handling, cohesion and coupling, design patterns, and testing strategies.",
+  "CSC 434": "AI and machine learning in Python: search and heuristics, genetic algorithms, game playing, knowledge-based and probabilistic reasoning, ensembles, support vector machines and neural networks. Project-based.",
+  "CSC 435": "Data analytics in R: cleaning and reshaping data, visualization, modeling and machine learning, web scraping, text analysis and clustering. Cross-listed as CIS 435 and CSC 435.",
+  "CSC 483": "Formal languages and automata: regular and context-free languages, finite and pushdown automata, Turing machines, computability, undecidability and complexity.",
+  "CIS 102": "Foundations of information systems: managing information, systems theory, decision making, IT and telecommunications, and analyzing requirements for tailored solutions.",
+  "CIS 116": "Spreadsheet skills in Microsoft Excel, to a workplace standard. Lab-heavy.",
+  "CIS 117": "How the web works (client-server architecture, Internet protocols) and building static pages with XHTML and CSS. Hands-on labs.",
+  "CIS 206": "Everyday IT tools: operating systems, office productivity software, desktop and web publishing, multimedia documents, spreadsheets and search. Hands-on labs.",
+  "CIS 303": "Hardware and system software for IS students: data representation, digital logic, CPU and memory, storage and I/O, networks, and how an operating system manages processes, files and memory.",
+  "CIS 309": "Hands-on lab with real hardware, operating systems and networks: setup, measurement and troubleshooting.",
+  "CIS 317": "Systems analysis: the development life cycle, feasibility and requirements analysis, data flow diagrams and data dictionaries, prototyping, interface design and quality assurance. Supervised labs.",
+  "CIS 404": "Usability and human-computer interaction: theory, interface evaluation, cross-cultural design, interaction devices and collaboration tools, with prototypes built in multimedia tools.",
+  "CIS 419": "Networking: the OSI and TCP/IP models, protocols, LANs, wireless and WANs, routing, IP addressing and basic network security, with hands-on equipment work.",
+  "CIS 421": "Security in practice: authentication, access control, cryptography, intrusion detection, firewalls, IP, web and database security, and ethics. Hands-on with security tools.",
+  "CIS 422": "Database design and implementation: data modeling, normalization, and building a working database in a DBMS.",
+  "CIS 427": "Managing software projects: life cycle, design, testing and quality assurance, delivery and training, metrics, cost analysis and change management.",
+  "CIS 434": "Decision support and expert systems: linear programming, decision trees, group decision support, AI basics and knowledge representation, using Excel and expert-system tools.",
+  "CIS 436": "Data mining methods: data preparation, classification with decision trees and Bayesian methods, clustering and association rules.",
+  "CIS 442": "E-commerce systems: infrastructure, site design, technology business plans, and ethical and social issues, studied through real cases.",
+  "CIS 446": "Cloud computing: service models, virtualization, security, service-level metrics, load balancing, scheduling and big-data processing with Spark. Programming-heavy.",
+  "CIS 472": "Aligning information systems with business strategy: business process analysis across marketing, supply chain, accounting and human resources, using ERP systems.",
+  "CIS 487": "IT for development: working with small regional businesses to assess technology needs, plan, train and implement a solution.",
+  "CYB 105": "Cybersecurity principles: recognizing and mitigating attacks and securing enterprise networks.",
+  "CYB 203": "Python programming: syntax, control structures, lists, tuples, sets and dictionaries, functions, recursion, objects, files, exceptions and GUIs. Supervised labs.",
+  "CYB 205": "Security across traditional, hybrid and cloud infrastructure, and the role of security operations in protecting an organization.",
+  "CYB 401": "Ethical hacking methods: finding and reporting vulnerabilities, attacker tools and techniques, and countermeasures. Hands-on labs.",
+  "CYB 403": "Designing, configuring and managing firewalls, including next-generation features such as threat prevention, intrusion detection, content filtering, VPN and logging. Lab-based.",
+  "CYB 405": "Database security: principles, auditing, DBMS security features, reliability and access control.",
+  "CYB 418": "Information assurance: security and risk management, incident detection and response, and contingency planning.",
+  "ECN 100": "Economic reasoning and core principles, competing economic systems, micro versus macro, and current issues in the US economy.",
+  "ACC": "ACC 280 surveys financial and managerial accounting in one course. ACC 281 covers financial accounting and statements under GAAP. ACC 282 covers managerial accounting: costing, budgeting and variance analysis.",
+  "BUS 325": "Corporate finance: time value of money, risk and return, valuation, financial analysis and planning, capital budgeting and financing.",
+  "BUS 335": "Marketing: identifying needs, choosing target markets, developing and launching products, promotion, and service marketing.",
+  "BUS 366": "Behavior in organizations: motivation, leadership, group dynamics, communication, culture, organizational development and diversity.",
+  "HCS 310": "Overview of the US healthcare system, the trends and policy shaping it, and how care is financed.",
+  "HCS 464": "Healthcare operations: work design and re-engineering, systems thinking, planning and analysis, ergonomics and quality improvement.",
+  "CRJ 101": "Crime in the United States and how police, courts and corrections operate, with an introduction to theories of crime.",
+  "CRJ 422": "Cybercrime and digital forensics: offender methods, investigation techniques, and the legal framework."
+};
+const catalogUrl = c => { const p = c.slice(0, 3); return "https://www.brockport.edu/academics/catalogs/current-courses/show-courses/?code=" + p + "&name=" + encodeURIComponent(CATALOG[p]) + "&level=All"; };
+
+(function () {
+  const VIEWS = [["all", "All majors"], ["cis-business", "CIS · Business"], ["cis-healthcare", "CIS · Healthcare"], ["cyb", "CYB"], ["csc-advanced", "CSC · Advanced Computing"], ["csc-software", "CSC · Software Development"]];
+  const MAJORS = ["CIS", "CYB", "CSC"];
+  const OFF = { FS: "Fall and spring", F: "Fall only", S: "Spring only", IRR: "Irregular", UNK: "Unknown; check the portal" };
+  const TERM = { F: "F", S: "S", IRR: "irr", UNK: "?" };
+  const NH = 34, RH = 44, PADX = 14, HEAD = 46;
+  const state = { view: "all", sel: null, opt: {} };
+  for (const k in PROGRAMS) state.opt[k] = { math: PROGRAMS[k].math, start: "F" };
+  const $ = id => document.getElementById(id);
+  const label = c => COURSES[c].label || c;
+  const esc = s => String(s).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+  const lane = c => ({ MTH: 0, CSC: 1, CIS: 2, CYB: 3 }[c.slice(0, 3)] ?? 4);
+  const preText = c => {
+    const v = COURSES[c];
+    if (v.raw) return v.raw;
+    const parts = v.pre.map(g => g.length > 1 ? "(" + g.map(label).join(" or ") + ")" : label(g[0]));
+    let t = parts.length ? parts.join(" and ") : "None";
+    if (v.co) t += "; corequisite " + v.co.map(label).join(" and ");
+    return t;
+  };
+  // which majors use a course: "req", "el" or undefined
+  const USE = {};
+  for (const c in COURSES) USE[c] = {};
+  for (const k in PROGRAMS) { const p = PROGRAMS[k]; p.el.forEach(c => { if (!USE[c][p.major]) USE[c][p.major] = "el"; }); }
+  for (const k in PROGRAMS) { const p = PROGRAMS[k]; p.req.forEach(c => { USE[c][p.major] = "req"; }); }
+
+  function overviewModel() {
+    const ids = Object.keys(COURSES), edges = [], depth = {};
+    const d = c => {
+      if (depth[c] != null) return depth[c];
+      let x = 0;
+      for (const g of COURSES[c].pre) x = Math.max(x, 1 + Math.min(...g.map(d)));
+      for (const q of (COURSES[c].co || [])) x = Math.max(x, d(q) + 1);
+      return (depth[c] = x);
+    };
+    for (const c of ids) {
+      for (const g of COURSES[c].pre) for (const p of g) edges.push({ from: p, to: c, alt: g.length > 1 });
+      for (const q of (COURSES[c].co || [])) edges.push({ from: q, to: c, co: true });
+    }
+    const col = {}; ids.forEach(c => col[c] = d(c));
+    return { ids, edges, col, crit: new Set(), critEdges: new Set(), heads: n => ["Step " + (n + 1), ""], align: "center", depth: Math.max(...ids.map(d)) + 1 };
+  }
+  function programModel(key) {
+    const a = analyze(key, state.opt[key]);
+    const ids = [...a.shown], col = {};
+    ids.forEach(c => col[c] = a.es[c] - 1);
+    return { a, ids, edges: a.edges.filter(e => a.shown.has(e.from) && a.shown.has(e.to)), col, crit: a.crit, critEdges: a.critEdges,
+      heads: n => ["Sem " + (n + 1), a.isFall(n + 1) ? "Fall" : "Spring"], bands: n => a.isFall(n + 1), align: "top" };
+  }
+
+  function layout(m) {
+    const ins = {}, outs = {};
+    m.ids.forEach(c => { ins[c] = []; outs[c] = []; });
+    m.edges.forEach(e => { ins[e.to].push(e); outs[e.from].push(e); });
+    const loose = m.ids.filter(c => !ins[c].length && !outs[c].length);
+    const chained = m.ids.filter(c => ins[c].length || outs[c].length);
+    // a course with no prerequisites sits just before the first course that needs it
+    chained.filter(c => !ins[c].length).forEach(c => {
+      const t = Math.min(...outs[c].map(e => m.col[e.to] - (e.co ? 0 : 1)));
+      if (!m.crit.has(c)) m.col[c] = Math.max(m.col[c], t);
+    });
+    const ncol = Math.max(...chained.map(c => m.col[c])) + 1;
+    const cols = Array.from({ length: ncol }, () => []);
+    chained.sort((x, y) => lane(x) - lane(y) || x.localeCompare(y)).forEach(c => cols[m.col[c]].push(c));
+    const y = {};
+    const band = m.align === "top" ? Math.max(...cols.map(cl => cl.filter(c => m.crit.has(c)).length)) : 0;
+    const maxRows = () => Math.max(...cols.map(cl => band ? band + cl.filter(c => !m.crit.has(c)).length : cl.length));
+    const place = () => cols.forEach(cl => {
+      if (!band) { cl.forEach((c, i) => y[c] = i + (maxRows() - cl.length) / 2); return; }
+      let a = 0, b = band;
+      cl.forEach(c => { y[c] = m.crit.has(c) ? a++ : b++; });
+    });
+    place();
+    const mean = (c, list, pick) => list.length ? list.reduce((s, e) => s + y[pick(e)], 0) / list.length : y[c];
+    for (let it = 0; it < 8; it++) {
+      const fwd = it % 2 === 0;
+      (fwd ? cols : [...cols].reverse()).forEach(cl => {
+        const key = {};
+        cl.forEach(c => key[c] = fwd ? mean(c, ins[c], e => e.from) : mean(c, outs[c], e => e.to));
+        cl.sort((p, q) => (m.crit.has(q) - m.crit.has(p)) || key[p] - key[q] || lane(p) - lane(q) || p.localeCompare(q));
+      });
+      place();
+    }
+    return { cols, y, loose, rows: maxRows(), ncol, ins, outs, band };
+  }
+
+  function draw() {
+    const prog = state.view !== "all";
+    const m = prog ? programModel(state.view) : overviewModel();
+    const L = layout(m);
+    const NW = prog ? 116 : 130;
+    const avail = ($("chart").parentNode.clientWidth || 1100) - 24;
+    const CW = Math.max(NW + 34, Math.min(NW + 80, Math.floor((avail - PADX * 2) / L.ncol)));
+    const perRow = Math.max(1, Math.floor((L.ncol * CW - 8) / (NW + 12)));
+    const looseRows = Math.ceil(L.loose.length / perRow);
+    const W = PADX * 2 + L.ncol * CW, bodyH = L.rows * RH;
+    const stripY = HEAD + bodyH + 30;
+    const H = stripY + (looseRows ? looseRows * RH + 6 : -16);
+    const X = {}, Y = {};
+    L.cols.forEach((cl, i) => cl.forEach(c => { X[c] = PADX + i * CW + (CW - NW) / 2; Y[c] = HEAD + 8 + L.y[c] * RH; }));
+    L.loose.sort((p, q) => lane(p) - lane(q) || p.localeCompare(q)).forEach((c, i) => { X[c] = PADX + (CW - NW) / 2 + (i % perRow) * (NW + 12); Y[c] = stripY + 6 + Math.floor(i / perRow) * RH; });
+    let s = `<defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" markerUnits="userSpaceOnUse" orient="auto"><path class="mk" d="M0 0 8 4 0 8z"/></marker><marker id="ahc" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path class="mk-crit" d="M0 0 8 4 0 8z"/></marker></defs>`;
+    for (let i = 0; i < L.ncol; i++) {
+      const h = m.heads(i), a = m.bands ? m.bands(i) : i % 2 === 0;
+      s += `<rect class="${a ? "band-a" : "band-b"}" x="${PADX + i * CW + 3}" y="0" width="${CW - 6}" height="${HEAD + bodyH + 8}" rx="6"/>`;
+      s += `<text class="colhead" x="${PADX + i * CW + CW / 2}" y="18" text-anchor="middle">${h[0]}</text><text class="colsub" x="${PADX + i * CW + CW / 2}" y="33" text-anchor="middle">${h[1]}</text>`;
+    }
+    if (L.loose.length) s += `<text class="striplabel" x="${PADX + 4}" y="${stripY - 4}">NO PREREQUISITE CHAIN</text>`;
+    if (L.band) s += `<path class="bandline" d="M${PADX + 3} ${HEAD + 8 + L.band * RH - 5}H${W - PADX - 3}"/>`;
+    const order = [...m.edges].sort((p, q) => m.critEdges.has(p.from + ">" + p.to) - m.critEdges.has(q.from + ">" + q.to));
+    for (const e of order) {
+      const cr = m.critEdges.has(e.from + ">" + e.to);
+      const x1 = X[e.from] + NW, y1 = Y[e.from] + NH / 2, x2 = X[e.to], y2 = Y[e.to] + NH / 2;
+      let dpath;
+      if (x2 <= x1) { const xr = X[e.to] + NW; dpath = `M${x1} ${y1} C${x1 + 26} ${y1} ${xr + 26} ${y2} ${xr + 1} ${y2}`; }
+      else { const dx = Math.max(18, (x2 - x1) * 0.5); dpath = `M${x1} ${y1} C${x1 + dx} ${y1} ${x2 - dx} ${y2} ${x2 - 1} ${y2}`; }
+      s += `<path class="edge${cr ? " crit" : ""}${e.alt ? " alt" : ""}${e.co ? " co" : ""}" data-f="${e.from}" data-t="${e.to}" d="${dpath}" marker-end="url(#${cr ? "ahc" : "ah"})"/>`;
+    }
+    for (const c of m.ids) {
+      const v = COURSES[c];
+      let cls = "node";
+      if (prog) { if (m.crit.has(c)) cls += " crit"; else if (m.a.support.has(c)) cls += " support"; else if (!m.a.reqSet.has(c)) cls += " el"; }
+      let inner = `<rect class="box" x="${X[c]}" y="${Y[c]}" width="${NW}" height="${NH}" rx="6"/><text class="code" x="${X[c] + 9}" y="${Y[c] + 22}">${esc(label(c))}</text>`;
+      if (prog) { if (v.off !== "FS") inner += `<text class="term${v.off === "IRR" || v.off === "UNK" ? " odd" : ""}" x="${X[c] + NW - 8}" y="${Y[c] + 21.5}" text-anchor="end">${TERM[v.off]}</text>`; }
+      else MAJORS.forEach((mj, i) => { const u = USE[c][mj]; if (u) inner += `<circle class="pip pip-${mj}${u === "el" ? " ring" : ""}" cx="${X[c] + NW - 32 + i * 11}" cy="${Y[c] + NH / 2}" r="3.4"/>`; });
+      s += `<g class="${cls}" data-id="${c}" tabindex="0" role="button" aria-label="${esc(label(c) + ", " + v.t)}"><title>${esc(label(c) + " · " + v.t + (DESC[c] ? "\n" + DESC[c] : ""))}</title>${inner}</g>`;
+    }
+    const svg = $("chart");
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.style.width = W + "px"; svg.style.maxWidth = "none";
+    svg.innerHTML = s;
+    svg.setAttribute("aria-label", prog ? `Prerequisite chain for ${m.a.P.name}, courses placed by earliest semester, critical path highlighted` : "Prerequisite chains across the CIS, CYB and CSC majors");
+    state.model = m; state.L = L;
+    if (state.sel && !m.ids.includes(state.sel)) state.sel = null;
+    focus(state.sel);
+    summary(m, prog);
+    detail();
+  }
+
+  function related(c) {
+    const m = state.model, on = new Set([c]);
+    const up = x => m.edges.forEach(e => { if (e.to === x && !on.has(e.from)) { on.add(e.from); up(e.from); } });
+    const seenDown = new Set([c]);
+    const down = x => m.edges.forEach(e => { if (e.from === x && !seenDown.has(e.to)) { seenDown.add(e.to); down(e.to); } });
+    up(c); down(c);
+    return { up: on, down: seenDown };
+  }
+  function focus(c) {
+    const svg = $("chart");
+    svg.classList.toggle("focus", !!c);
+    svg.querySelectorAll(".on,.sel").forEach(n => n.classList.remove("on", "sel"));
+    if (!c) return;
+    const r = related(c);
+    svg.querySelectorAll(".node").forEach(n => { const id = n.dataset.id; if (r.up.has(id) || r.down.has(id)) n.classList.add("on"); if (id === c) n.classList.add("sel"); });
+    svg.querySelectorAll(".edge").forEach(p => { const f = p.dataset.f, t = p.dataset.t; if ((r.up.has(f) && r.up.has(t)) || (r.down.has(f) && r.down.has(t))) p.classList.add("on"); });
+  }
+
+  function summary(m, prog) {
+    $("controls").hidden = !prog;
+    const box = $("summary"), path = $("path");
+    if (!prog) {
+      box.innerHTML = `<div class="stat"><div class="k">Courses drawn</div><div class="v">${m.ids.length}</div></div><div class="stat"><div class="k">Deepest chain</div><div class="v">${m.depth} <small>courses, starting from MTH 111</small></div></div><div class="stat"><div class="k">Shared trunk</div><div class="v" style="font-size:16px">CSC 120 → CSC 203 or CYB 203 → CSC 209 → CIS 419</div></div>`;
+      path.hidden = true;
+      $("cap").textContent = "Every course in the three majors, placed by the longest chain of prerequisites leading to it. Courses with no prerequisites sit just before the first course that needs them. Dots show which majors use each course. Pick a major above to see its critical path.";
+      return;
+    }
+    const a = m.a, o = state.opt[state.view];
+    document.querySelectorAll("#controls button").forEach(b => b.setAttribute("aria-pressed", String(o[b.dataset.k] === b.dataset.v)));
+    const spare = a.minSlack;
+    box.innerHTML = `<div class="stat"><div class="k">Shortest possible sequence</div><div class="v">${a.T} <small>semesters</small></div></div>` +
+      `<div class="stat${spare === 0 ? " alert" : ""}"><div class="k">Slack on the critical path, four-year plan</div><div class="v">${spare} <small>semester${spare === 1 ? "" : "s"}</small></div></div>` +
+      `<div class="stat"><div class="k">Courses on the critical path</div><div class="v">${[...a.crit].length} <small>of ${a.req.length} required</small></div></div>`;
+    const bySem = {};
+    [...a.crit].forEach(c => (bySem[a.es[c]] = bySem[a.es[c]] || []).push(c));
+    const sems = Object.keys(bySem).map(Number).sort((p, q) => p - q);
+    let h = `<h2>Critical path, by earliest semester</h2><div class="steps">`;
+    sems.forEach((n, i) => {
+      if (i) h += `<span class="arrow" aria-hidden="true">→</span>`;
+      h += `<span class="step"><span class="s">Sem ${n} · ${a.isFall(n) ? "Fall" : "Spring"}</span><span class="c">${bySem[n].sort().map(label).map(esc).join(" + ")}</span></span>`;
+    });
+    h += `</div>`;
+    const w = [];
+    if (spare === 0) w.push(`<b>No slack.</b> One missed or failed course on this path moves graduation past eight semesters.`);
+    const odd = a.req.filter(c => ["IRR", "UNK"].includes(COURSES[c].off));
+    const oddCrit = odd.filter(c => a.crit.has(c)), oddRest = odd.filter(c => !a.crit.has(c));
+    if (oddCrit.length) w.push(`<b>${oddCrit.map(label).join(", ")}</b> ${oddCrit.length > 1 ? "are" : "is"} on the critical path and ${oddCrit.length > 1 ? "have" : "has"} no regular offering term. The chart assumes it runs every semester.`);
+    if (oddRest.length) w.push(`<b>${oddRest.map(label).join(", ")}</b>: offering term unknown or irregular. Check the portal.`);
+    if (a.reqSet.has("CIS 472")) w.push(`<b>CIS 472</b> rests on flag 5 (BUS 366 standing in for BUS 365) and open flag 6 (whether ACC 281 or 282 meets its ACC 280 prerequisite).`);
+    if (w.length) h += `<ul class="warns">${w.map(x => `<li>${x}</li>`).join("")}</ul>`;
+    path.innerHTML = h; path.hidden = false;
+    $("cap").textContent = `${a.P.name}: each course sits in the earliest semester its prerequisites and offering term allow, starting in ${o.start === "F" ? "fall" : "spring"} with ${o.math === "111" ? "MTH 111" : "MTH 122"}. Courses with no prerequisites sit just before the first course that needs them. ${a.P.elNote}`;
+  }
+
+  function detail() {
+    const c = state.sel, box = $("detail"), m = state.model, prog = state.view !== "all";
+    if (!c) { box.innerHTML = `<h2>Course</h2><p class="sub" style="margin:0">Select a course to see what it covers, its prerequisites, its timing and what it unlocks.</p>`; pop(); return; }
+    const v = COURSES[c];
+    let rows = `<dt>Offered</dt><dd>${OFF[v.off]}</dd><dt>Prerequisites</dt><dd>${esc(preText(c))}</dd>`;
+    const next = m.edges.filter(e => e.from === c).map(e => label(e.to)).sort();
+    if (prog) {
+      const a = m.a;
+      const role = a.reqSet.has(c) ? "Required" : a.support.has(c) ? "Needed for an elective" : "Elective option";
+      rows = `<dt>In this major</dt><dd>${role}${a.crit.has(c) ? ", on the critical path" : ""}</dd>` + rows;
+      rows += `<dt>Earliest</dt><dd>Semester ${a.es[c]} (${a.isFall(a.es[c]) ? "fall" : "spring"})</dd>`;
+      if (a.reqSet.has(c)) rows += `<dt>Latest</dt><dd>Semester ${a.ls[c]} for a finish in ${a.H} semesters</dd><dt>Slack</dt><dd>${a.slack[c]} semester${a.slack[c] === 1 ? "" : "s"}</dd>`;
+    } else {
+      const use = MAJORS.filter(mj => USE[c][mj]).map(mj => mj + (USE[c][mj] === "el" ? " (elective)" : "")).join(", ");
+      rows += `<dt>Used by</dt><dd>${use || "None"}</dd>`;
+    }
+    rows += `<dt>Unlocks</dt><dd>${next.length ? esc([...new Set(next)].join(", ")) : "Nothing further"}</dd>`;
+    const about = DESC[c] ? `<p class="about">${esc(DESC[c])}</p><p class="src"><a href="${catalogUrl(c)}" target="_blank" rel="noopener">Full entry in the 2026-27 catalog, ${c.slice(0, 3)} listing</a></p>` : "";
+    box.innerHTML = `<h2>Course</h2><h3>${esc(label(c))}</h3><p class="sub">${esc(v.t)} · ${v.cr} cr</p>${about}<dl>${rows}</dl>`;
+    pop();
+  }
+  // card next to the selected course
+  function pop() {
+    const p = $("pop"), c = state.sel;
+    if (!c) { p.hidden = true; return; }
+    const v = COURSES[c], g = [...$("chart").querySelectorAll(".node")].find(n => n.dataset.id === c);
+    if (!g) { p.hidden = true; return; }
+    $("pop-body").innerHTML = `<h3>${esc(label(c))}</h3><p class="sub">${esc(v.t)} · ${v.cr} cr · ${OFF[v.off].toLowerCase()}</p>` +
+      (DESC[c] ? `<p class="about">${esc(DESC[c])}</p>` : "") +
+      `<p class="pre"><b>Prerequisites</b> ${esc(preText(c))}</p>` +
+      `<p class="src"><a href="${catalogUrl(c)}" target="_blank" rel="noopener">Full catalog entry</a> · more below the chart</p>`;
+    p.hidden = false;
+    const fig = p.parentNode.getBoundingClientRect(), r = g.getBoundingClientRect();
+    const pw = p.offsetWidth, ph = p.offsetHeight;
+    let left = Math.max(8, Math.min(r.left - fig.left, fig.width - pw - 8));
+    let top = r.bottom - fig.top + 8;
+    if (top + ph > fig.height - 8 && r.top - fig.top - ph - 8 > 0) top = r.top - fig.top - ph - 8;
+    p.style.left = left + "px"; p.style.top = top + "px";
+  }
+
+  function setView(v, fromHash) {
+    if (!VIEWS.some(x => x[0] === v)) v = "all";
+    state.view = v;
+    document.querySelectorAll("#tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.v === v)));
+    if (!fromHash) { try { history.replaceState(null, "", "#" + v); } catch (e) { location.hash = v; } }
+    draw();
+  }
+  $("tabs").innerHTML = VIEWS.map(v => `<button type="button" role="tab" id="tab-${v[0]}" data-v="${v[0]}" aria-selected="false">${v[1]}</button>`).join("");
+  $("tabs").addEventListener("click", e => { const b = e.target.closest("button"); if (b) setView(b.dataset.v); });
+  $("controls").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; state.opt[state.view][b.dataset.k] = b.dataset.v; draw(); });
+  const pick = t => { const g = t.closest && t.closest(".node"); return g ? g.dataset.id : null; };
+  $("chart").addEventListener("click", e => { const id = pick(e.target); state.sel = id && id !== state.sel ? id : null; focus(state.sel); detail(); });
+  $("chart").addEventListener("keydown", e => { if (e.key !== "Enter" && e.key !== " ") return; const id = pick(e.target); if (!id) return; e.preventDefault(); state.sel = id !== state.sel ? id : null; focus(state.sel); detail(); });
+  $("chart").addEventListener("mouseover", e => { if (state.sel) return; const id = pick(e.target); if (id) focus(id); });
+  $("chart").addEventListener("mouseout", e => { if (state.sel) return; if (pick(e.target)) focus(null); });
+  const clear = () => { if (!state.sel) return; state.sel = null; focus(null); detail(); };
+  $("pop-close").addEventListener("click", clear);
+  document.addEventListener("keydown", e => { if (e.key === "Escape") clear(); });
+  $("chart").parentNode.addEventListener("scroll", pop);
+  let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(draw, 150); });
+  window.addEventListener("hashchange", () => setView(location.hash.slice(1), true));
+  setView(location.hash.slice(1) || "all", true);
+})();
+
+</script>
+</body>
+</html>
