@@ -1,0 +1,1761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Computing Sciences Degree Planner</title>
+<style>
+/* Layout idea: a summary strip, then a board of semester columns beside a list of what needs attention. */
+:root {
+  --bg: #f1f3ee;
+  --surface: #ffffff;
+  --sunk: #e8ebe4;
+  --ink: #17201b;
+  --muted: #5b675f;
+  --line: #d5dad2;
+  --accent: #1b5a3d;
+  --accent-ink: #ffffff;
+  --gold: #b8860b;
+  --bad: #b3261e;
+  --bad-bg: #fbe7e4;
+  --warn: #8a5a00;
+  --warn-bg: #fdf1cf;
+  --ok: #1b6b40;
+  --ok-bg: #e0f1e5;
+  --g-major: #1b5a3d;
+  --g-cog: #2f66a0;
+  --g-ge: #8b9189;
+  --g-free: #b8860b;
+  --g-extra: #7b4aa0;
+  --shadow: 0 1px 2px rgba(23, 32, 27, 0.08), 0 6px 18px rgba(23, 32, 27, 0.06);
+  --font-display: "Archivo", "Arial Narrow", Arial, sans-serif;
+  --font-body: "Public Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-code: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111613; --surface: #1a211d; --sunk: #141a17; --ink: #e7ece8; --muted: #9ba79f; --line: #2d3832;
+    --accent: #6cc79a; --accent-ink: #0d1511; --gold: #e0b44a;
+    --bad: #ff8a80; --bad-bg: #3a1c1a; --warn: #f0c060; --warn-bg: #35290f; --ok: #7fd3a2; --ok-bg: #16301f;
+    --g-major: #6cc79a; --g-cog: #7fb0e6; --g-ge: #8d968f; --g-free: #e0b44a; --g-extra: #c39be6;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 18px rgba(0, 0, 0, 0.3);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111613; --surface: #1a211d; --sunk: #141a17; --ink: #e7ece8; --muted: #9ba79f; --line: #2d3832;
+  --accent: #6cc79a; --accent-ink: #0d1511; --gold: #e0b44a;
+  --bad: #ff8a80; --bad-bg: #3a1c1a; --warn: #f0c060; --warn-bg: #35290f; --ok: #7fd3a2; --ok-bg: #16301f;
+  --g-major: #6cc79a; --g-cog: #7fb0e6; --g-ge: #8d968f; --g-free: #e0b44a; --g-extra: #c39be6;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 18px rgba(0, 0, 0, 0.3);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 15px/1.45 var(--font-body);
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wrap { max-width: 1500px; margin: 0 auto; padding: 20px 20px 48px; display: flex; flex-direction: column; gap: 16px; }
+
+/* header */
+.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
+.top h1 { font: 700 28px/1.1 var(--font-display); letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+.top p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.status { font-size: 13px; color: var(--muted); margin-right: 4px; }
+.status.dirty { color: var(--warn); font-weight: 600; }
+.btn {
+  border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 7px 12px;
+  font-weight: 600; font-size: 14px;
+}
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.quiet { background: transparent; }
+.btn.danger { color: var(--bad); }
+.btn.small { padding: 4px 9px; font-size: 13px; }
+
+/* setup */
+.setup {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px 16px; align-items: end;
+}
+.field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.field label, .field .lbl { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: 0.02em; }
+.field input[type="text"], .field input[type="number"], .field select, .field textarea {
+  width: 100%; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 7px 9px; min-width: 0;
+}
+.field.wide { grid-column: span 2; }
+.field .hint { font-size: 12px; color: var(--muted); }
+.field.check { flex-direction: row; align-items: center; gap: 8px; padding-bottom: 7px; }
+.field.check label { font-size: 14px; color: var(--ink); font-weight: 500; letter-spacing: 0; }
+.pair { display: flex; gap: 8px; }
+.pair > * { flex: 1; min-width: 0; }
+
+/* summary */
+.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.tile {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 6px; text-align: left; min-width: 0;
+}
+button.tile:hover { border-color: var(--accent); }
+.tile .k { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: 0.02em; }
+.tile .v { font: 700 24px/1 var(--font-display); font-variant-numeric: tabular-nums; }
+.tile .v small { font: 500 13px var(--font-body); color: var(--muted); }
+.meter { height: 6px; background: var(--sunk); border-radius: 3px; overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+.tile.bad { border-color: var(--bad); background: var(--bad-bg); }
+.tile.bad .v, .tile.bad .k { color: var(--bad); }
+.tile.warn { border-color: var(--warn); background: var(--warn-bg); }
+.tile.warn .v, .tile.warn .k { color: var(--warn); }
+.tile.short .meter i { background: var(--gold); }
+.tile.good .v { color: var(--ok); }
+
+/* work area */
+.work { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 16px; align-items: start; }
+.boardwrap { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.board { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.term, .tray {
+  background: var(--sunk); border: 1px solid var(--line); border-radius: 12px; padding: 10px;
+  display: flex; flex-direction: column; gap: 8px; min-height: 96px; min-width: 0;
+}
+.term.over, .tray.over { border-color: var(--accent); border-style: dashed; background: var(--ok-bg); }
+.term header, .tray header { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.term h3, .tray h3 { margin: 0; font: 700 15px/1.2 var(--font-display); }
+.term .load { font: 600 13px var(--font-code); font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; }
+.term header { flex-wrap: wrap; }
+.term h3 { white-space: nowrap; }
+.term .load.high { color: var(--warn); }
+.tray p { margin: 0; font-size: 12px; color: var(--muted); }
+.cards { display: flex; flex-direction: column; gap: 6px; }
+.empty { font-size: 12px; color: var(--muted); padding: 6px 2px; }
+.addterm { display: flex; flex-direction: column; gap: 8px; justify-content: center; align-items: stretch; background: transparent; border-style: dashed; }
+.trays { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted); margin-left: auto; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+
+.card {
+  display: grid; grid-template-columns: 1fr auto; gap: 1px 8px; text-align: left; width: 100%;
+  background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--g-ge);
+  border-radius: 8px; padding: 7px 9px;
+}
+.card:hover { border-top-color: var(--accent); border-right-color: var(--accent); border-bottom-color: var(--accent); }
+.card.g-major { border-left-color: var(--g-major); }
+.card.g-cog { border-left-color: var(--g-cog); }
+.card.g-ge { border-left-color: var(--g-ge); }
+.card.g-free { border-left-color: var(--g-free); }
+.card.g-extra { border-left-color: var(--g-extra); }
+.card .code { font: 600 13.5px/1.3 var(--font-code); }
+.card .code.plain { font: 600 13.5px/1.3 var(--font-body); }
+.card .cr { font: 500 12px/1.5 var(--font-code); color: var(--muted); font-variant-numeric: tabular-nums; }
+.card .title { grid-column: 1 / -1; font-size: 12.5px; line-height: 1.3; color: var(--muted); overflow-wrap: anywhere; }
+.card .tags { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+.card .tags:empty { display: none; }
+.tag { font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 999px; background: var(--sunk); color: var(--muted); }
+.tag.bad { background: var(--bad-bg); color: var(--bad); }
+.tag.warn { background: var(--warn-bg); color: var(--warn); }
+.card.has-error { border-color: var(--bad); border-left-color: var(--bad); }
+.card.dragging { opacity: 0.4; }
+.card.flash { animation: flash 1.2s ease-out; }
+@keyframes flash { 0%, 40% { box-shadow: 0 0 0 3px var(--gold); } 100% { box-shadow: 0 0 0 0 transparent; } }
+@media (prefers-reduced-motion: reduce) { .card.flash { animation: none; outline: 3px solid var(--gold); } }
+
+/* completed semesters read as history: no fill, dashed outlines, greyed text, in both themes */
+.term.done { background: transparent; border-style: dashed; }
+.term.done h3 { color: var(--muted); }
+.term.done .cards { opacity: 0.6; }
+.term.done .card { background: transparent; border: 1px dashed var(--muted); border-left: 4px solid var(--muted); }
+.term.done .card .code, .term.done .card .title, .term.done .card .cr { color: var(--muted); }
+.term.done .card .tag { background: transparent; border: 1px solid var(--line); }
+.term.done .card.has-error { border-color: var(--bad); }
+.donetag { font-size: 11px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; color: var(--bg); background: var(--muted); border-radius: 4px; padding: 1px 6px; margin-right: auto; }
+
+/* side */
+.side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.panel h2 { margin: 0; font: 700 16px/1.2 var(--font-display); }
+.panel h4 { margin: 4px 0 0; font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: 0.03em; text-transform: uppercase; }
+.issues { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.issue { border-left: 3px solid var(--line); background: var(--sunk); border-radius: 6px; padding: 7px 9px; font-size: 13px; line-height: 1.4; display: flex; flex-direction: column; gap: 6px; }
+.issue.error { border-left-color: var(--bad); background: var(--bad-bg); }
+.issue.warn { border-left-color: var(--warn); background: var(--warn-bg); }
+.issue .go { background: none; border: 0; padding: 0; text-align: left; color: inherit; }
+.issue .go:hover { text-decoration: underline; }
+.issue .fix { display: flex; flex-wrap: wrap; gap: 6px; }
+.allgood { color: var(--ok); font-weight: 600; font-size: 14px; }
+.checklist { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; font: 500 13px var(--font-code); }
+.checklist .yes::before { content: "✓ "; color: var(--ok); }
+.checklist .no::before { content: "✗ "; color: var(--bad); }
+.small { font-size: 12.5px; color: var(--muted); margin: 0; }
+
+.gelist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.gelist li { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--line); }
+.gelist li:last-child { border-bottom: 0; }
+.gelist .gcode { font: 600 13px var(--font-code); color: var(--muted); }
+.gelist .go { background: none; border: 0; padding: 0; text-align: left; color: inherit; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.gelist .go:hover .gname { text-decoration: underline; }
+.gelist .gname { font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+.gelist .gstat { font-size: 12px; color: var(--muted); }
+.gelist li.open .gstat { color: var(--warn); font-weight: 600; }
+fieldset.also { border: 1px solid var(--line); border-radius: 8px; margin: 0; padding: 8px 12px 10px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+fieldset.also legend { font-size: 12px; font-weight: 600; color: var(--muted); padding: 0 4px; }
+fieldset.also .field.check { padding-bottom: 2px; }
+fieldset.also .small { margin-top: 6px; }
+
+/* dialogs */
+.overlay { position: fixed; inset: 0; background: rgba(10, 16, 12, 0.5); display: flex; align-items: flex-start; justify-content: center; padding: 6vh 16px 16px; z-index: 20; overflow-y: auto; }
+.dialog { background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); width: min(520px, 100%); padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+.dialog h2 { margin: 0; font: 700 20px/1.2 var(--font-display); text-wrap: balance; }
+.dialog .sub { margin: -6px 0 0; color: var(--muted); font-size: 13.5px; }
+.dialog .facts { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 13.5px; }
+.dialog .facts dt { color: var(--muted); }
+.dialog .facts dd { margin: 0; }
+.dialog .row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.dialog .row .left { margin-right: auto; }
+.dialog .row.start { justify-content: flex-start; }
+.dialog h4 { margin: 6px 0 0; font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: 0.03em; text-transform: uppercase; }
+.planlist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 50vh; overflow-y: auto; }
+.planrow { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.planrow.current { border-color: var(--accent); }
+.planrow .who { display: flex; flex-direction: column; gap: 2px; margin-right: auto; min-width: 0; overflow-wrap: anywhere; }
+.planrow .who span { font-size: 12.5px; color: var(--muted); }
+.dialog textarea { min-height: 120px; font: 12px/1.4 var(--font-code); resize: vertical; }
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 9px 14px; border-radius: 8px; font-size: 14px; font-weight: 600; z-index: 30; box-shadow: var(--shadow); }
+
+@media (max-width: 980px) {
+  .work { grid-template-columns: minmax(0, 1fr); }
+  .legend { margin-left: 0; }
+}
+@media (max-width: 520px) {
+  .wrap { padding: 16px 16px 40px; }
+  .field.wide { grid-column: auto; }
+  .board { grid-template-columns: minmax(0, 1fr); }
+}
+
+:root { --font-display: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; --font-body: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; --font-code: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Computing Sciences Degree Planner</h1>
+      <p>SUNY Brockport: CIS, Cybersecurity and Computer Science. Department data as of <span id="asof"></span>. Standalone copy: each plan is a CSV file on this computer.</p>
+    </div>
+    <div class="toolbar">
+      <span class="status" id="status" role="status"></span>
+      <button class="btn" type="button" id="btn-new">New plan</button>
+      <button class="btn" type="button" id="btn-open">Open CSV</button>
+      <button class="btn primary" type="button" id="btn-save">Save</button>
+      <button class="btn" type="button" id="btn-saveas">Save as</button>
+      <button class="btn" type="button" id="btn-copy">Copy as text</button>
+      <input type="file" id="file-open" accept=".csv,.json,text/csv,application/json" hidden>
+    </div>
+  </header>
+  <section class="setup" id="setup" aria-label="Plan setup"></section>
+  <section class="summary" id="summary" aria-label="Plan summary"></section>
+  <main class="work">
+    <div class="boardwrap">
+      <div class="board" id="board"></div>
+      <div class="trays" id="trays"></div>
+      <div class="actions">
+        <button class="btn" type="button" id="btn-add">Add a course or free elective</button>
+        <div class="legend" aria-label="Card colors">
+          <span><i style="background:var(--g-major)"></i>Major</span>
+          <span><i style="background:var(--g-cog)"></i>Math, cognates, prerequisites</span>
+          <span><i style="background:var(--g-ge)"></i>General Education</span>
+          <span><i style="background:var(--g-free)"></i>Free elective</span>
+          <span><i style="background:var(--g-extra)"></i>Minor or added</span>
+        </div>
+      </div>
+    </div>
+    <aside class="side" id="side" aria-label="Checks"></aside>
+  </main>
+</div>
+<script>window.PLANNER_STANDALONE = true;</script>
+<script>
+/* Planner data, encoded from the sheet "Computing Sciences advising catalog data" (revision 78, 2026-11-23).
+   Prerequisites: an array is AND; a nested array is OR. Offering: FS, F, S, IRR (irregular), UNK (check the schedule). */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.PLANNER_DATA = factory();
+})(typeof self !== 'undefined' ? self : this, function () {
+  const C = (t, cr, off, pre, extra) => Object.assign({ t, cr, off, pre: pre || [] }, extra || {});
+  const MATH_READY = ['MTH 111', 'MTH 122', 'MTH 201', 'MTH 202']; // "MTH 111 or higher"
+  const PRECALC_UP = ['MTH 122', 'MTH 201', 'MTH 202'];            // "MTH 122 or higher"
+
+  const courses = {
+    'CSC 120': C('Introduction to Computing', 4, 'FS', [MATH_READY]),
+    'CSC 203': C('Problem Solving with Objects', 4, 'FS', ['CSC 120', PRECALC_UP]),
+    'CSC 205': C('Fundamentals of Data Structures', 4, 'FS', ['CSC 203', 'MTH 281']),
+    'CSC 209': C('UNIX Tools', 1, 'FS', [['CSC 203', 'CYB 203']]),
+    'CSC 219': C('Programming in C', 1, 'FS', [['CSC 203', 'CYB 203']]),
+    'CSC 311': C('Computer Organization and Architecture', 4, 'FS', ['CSC 203', 'MTH 281']),
+    'CSC 312': C('Cybersecurity', 3, 'FS', ['CSC 209', ['CSC 311', 'CIS 303']]),
+    'CSC 356': C('Life in the Digital Age', 3, 'FS', [], { late: true }),
+    'CSC 386': C('Junior/Senior Seminar', 3, 'FS', [], { late: true, note: 'Formerly CSC 486. Juniors and seniors in the three majors.' }),
+    'CSC 401': C('Programming Languages', 3, 'F', ['CSC 205', 'CSC 219', 'CSC 311']),
+    'CSC 406': C('Algorithms and Data Structures', 3, 'S', ['CSC 205', 'MTH 481']),
+    'CSC 414': C('Operating Systems and Parallel Computing', 3, 'S', ['CSC 209', 'CSC 219', 'CSC 311']),
+    'CSC 423': C('Web Application Development', 3, 'F', ['CSC 209', 'CIS 422']),
+    'CSC 427': C('Software Systems Engineering', 3, 'FS', ['CSC 205']),
+    'CSC 429': C('Object-Oriented Software Development', 3, 'S', ['CSC 427']),
+    'CSC 434': C('Artificial Intelligence and Machine Learning', 3, 'F', ['CSC 205']),
+    'CSC 435': C('Data Analytics and Predictive Modeling', 3, 'S', ['CSC 205'], { twin: 'CIS 435' }),
+    'CSC 483': C('Theory of Computation', 3, 'S', ['CSC 203', 'MTH 481']),
+
+    'CIS 102': C('Fundamentals of Information Systems', 3, 'FS'),
+    'CIS 116': C('Introduction to Excel', 1, 'F', [], { waivable: true }),
+    'CIS 117': C('Introduction to Web Development', 1, 'FS', [], { waivable: true }),
+    'CIS 206': C('Information Technology Tools', 1, 'S', ['CIS 116'], { waivable: true }),
+    'CIS 303': C('Information Technology Hardware and Software', 3, 'F', [['CSC 203', 'CYB 203'], 'MTH 281']),
+    'CIS 309': C('IT Hardware and Networking Lab', 1, 'FS', [['CIS 303', 'CSC 311']]),
+    'CIS 317': C('Analysis and Logical Design of Information Systems', 4, 'F', ['CIS 102', 'CIS 206', 'CSC 203']),
+    'CIS 404': C('Multimedia and Human-Computer Interaction', 3, 'S', ['CSC 209', 'CIS 317']),
+    'CIS 419': C('Computer Networks and Internet Applications', 3, 'FS', ['CSC 209', ['CSC 203', 'CSC 219']]),
+    'CIS 421': C('Computer and Network Security', 3, 'F', ['CIS 419']),
+    'CIS 422': C('Physical Design and Implementation with DBMS', 3, 'FS', ['CSC 205']),
+    'CIS 427': C('Project Management and Practice', 3, 'S', ['CIS 317']),
+    'CIS 434': C('Decision Support and Expert Systems', 3, 'IRR', ['CIS 317', 'MTH 243']),
+    'CIS 435': C('Data Analytics and Predictive Modeling', 3, 'S', ['CSC 205'], { twin: 'CSC 435' }),
+    'CIS 436': C('Data Mining', 3, 'IRR', ['CIS 422', 'MTH 243']),
+    'CIS 442': C('Electronic Commerce Systems', 3, 'F', ['CSC 209', 'CIS 422', 'CIS 117']),
+    'CIS 446': C('Principles of Cloud Computing', 3, 'F', ['CSC 205', 'CSC 209', 'CIS 419']),
+    'CIS 472': C('Enterprise Architecture and IS Strategy', 3, 'S',
+      ['CIS 317', 'CIS 419', ['ACC 280', 'ACC 281', 'ACC 282'], 'BUS 366'], { co: ['CIS 422', 'CIS 427'] }),
+    'CIS 487': C('Information Technology for Development', 3, 'IRR', [], { note: 'Junior status; CIS majors and minors only.' }),
+
+    'CYB 105': C('Cybersecurity Fundamentals I', 3, 'FS', ['CIS 102']),
+    'CYB 203': C('Programming in Python', 4, 'IRR', ['CSC 120']),
+    'CYB 205': C('Cybersecurity Fundamentals II', 3, 'FS', ['CYB 105']),
+    'CYB 401': C('Ethical Hacking', 3, 'F', ['CIS 419']),
+    'CYB 403': C('Enterprise Security and Firewalls', 3, 'F', ['CYB 205', 'CIS 419']),
+    'CYB 405': C('Database and Web Security', 3, 'S', [['CYB 203', 'CSC 203']]),
+    'CYB 418': C('Information Assurance & Incident Response', 3, 'FS', ['CIS 102', 'CIS 303', 'CIS 419']),
+
+    'MTH 111': C('College Algebra', 3, 'FS'),
+    'MTH 122': C('Pre-Calculus', 4, 'FS', ['MTH 111']),
+    'MTH 201': C('Calculus I', 4, 'FS', ['MTH 122']),
+    'MTH 202': C('Calculus II', 4, 'FS', ['MTH 201']),
+    'MTH 243': C('Elementary Statistics', 3, 'FS'),
+    'MTH 281': C('Discrete Mathematics I', 4, 'FS', [PRECALC_UP]),
+    'MTH 481': C('Discrete Mathematics II', 3, 'FS', ['MTH 201', 'MTH 281']),
+    'ECN 100': C('Contemporary Economic Issues', 3, 'FS'),
+    'ACC 280': C('Introduction to Accounting', 3, 'FS', [MATH_READY]),
+    'ACC 281': C('Introduction to Financial Accounting', 3, 'FS'),
+    'ACC 282': C('Introduction to Managerial Accounting', 3, 'FS', ['ACC 281']),
+    'BUS 325': C('Principles of Finance', 3, 'FS', [['ACC 280', 'ACC 281'], 'ECN 100', 'MTH 243'],
+      { note: 'For CIS majors: an accounting course, ECN 100 and MTH 243.' }),
+    'BUS 335': C('Principles of Marketing', 3, 'FS', [], { note: 'Sophomore status.' }),
+    'BUS 366': C('Organizational Behavior', 3, 'FS', [],
+      { note: 'Counts in place of BUS 365, which is no longer offered. The substitution policy is not settled yet.' }),
+    'HCS 310': C('Healthcare Systems', 3, 'FS'),
+    'HCS 464': C('Operations Management in Healthcare', 3, 'UNK', [], { co: ['HCS 310'] }),
+    'CRJ 101': C('Introduction to Criminal Justice', 3, 'FS'),
+    'CRJ 422': C('Cybercrime and Digital Forensics', 3, 'FS', ['CRJ 101']),
+  };
+
+  // Older codes that count as a current course.
+  const alias = { 'BUS 365': 'BUS 366', 'CSC 486': 'CSC 386', 'CIS 202': 'CIS 102' };
+
+  const gened = {
+    GEP: { label: 'GEP 100 Academic Planning Seminar', cr: 1, suny: false },
+    Q: { label: 'ENG 112 College Composition', cr: 3, suny: true },
+    H: { label: 'Humanities', cr: 3, suny: true },
+    F: { label: 'The Arts', cr: 3, suny: true },
+    S: { label: 'Social Sciences', cr: 3, suny: true },
+    L: { label: 'Natural Science with lab', cr: 4, suny: true },
+    R: { label: 'World Language', cr: 3, suny: true },
+    V: { label: 'US History and Civic Engagement', cr: 3, suny: true },
+    O: { label: 'World History and Global Awareness', cr: 3, suny: true },
+    D: { label: 'Diversity, Equity, Inclusion & Social Justice', cr: 3, suny: true },
+    W: { label: 'Perspectives on Gender', cr: 3, suny: false },
+    M: { label: 'College Mathematics', suny: true },
+    Y: { label: 'Oral Communication', suny: true },
+    I: { label: 'Contemporary Issues', suny: false },
+  };
+
+  const pick = (id, label, pool, choice) => ({ pick: id, label, pool, choice: choice || null });
+  const free = (id, cr) => ({ free: id, cr });
+  const ge = (k) => ({ ge: k });
+  const CIS_EL = ['CIS 404', 'CIS 421', 'CIS 434', 'CIS 435', 'CIS 436', 'CIS 446', 'CIS 487'];
+  const PROJECT = ['CSC 423', 'CSC 429', 'CSC 434', 'CSC 435'];
+  const SD_EL = ['CSC 414', 'CSC 423', 'CSC 429', 'CSC 434', 'CSC 435', 'CSC 483', 'CIS 419', 'CIS 421'];
+  const CYB_EL = ['CIS 404', 'CIS 446', 'CIS 422', 'CIS 427', 'CIS 434', 'CIS 435', 'CIS 436', 'CIS 442', 'CIS 487',
+    'CSC 401', 'CSC 406', 'CSC 414', 'CSC 423', 'CSC 427', 'CSC 429', 'CSC 434', 'CSC 435', 'CSC 483'];
+  const CIS_CORE = ['CSC 203', 'CSC 205', 'CSC 209', 'CSC 312', 'CSC 356', 'CSC 386', 'CIS 102', 'CIS 117', 'CIS 206',
+    'CIS 303', 'CIS 309', 'CIS 317', 'CIS 419', 'CIS 422', 'CIS 427', 'CIS 442'];
+  const GE_FULL = ['GEP', 'Q', 'H', 'F', 'S', 'L', 'R', 'V', 'O', 'D', 'W'].map(ge);
+  const geWithout = (...skip) => GE_FULL.filter((g) => !skip.includes(g.ge));
+
+  function cis(env) {
+    const business = env === 'bus';
+    return {
+      name: business ? 'CIS, Business environment' : 'CIS, Healthcare environment',
+      discipline: 'CIS',
+      groups: [
+        ['Major core', CIS_CORE],
+        ['Major electives', [pick('cis-el-1', 'CIS elective', CIS_EL), pick('cis-el-2', 'CIS elective', CIS_EL)]],
+        ['Math', ['MTH 243', 'MTH 281']],
+        ['IS environment', ['CIS 472', pick('acc', 'Accounting course', ['ACC 281', 'ACC 280', 'ACC 282'], 'ACC 281'), 'BUS 366']
+          .concat(business ? ['BUS 325', 'BUS 335'] : ['HCS 310', 'HCS 464'])],
+        ['Prerequisites', ['MTH 111', 'MTH 122', 'CSC 120', 'CIS 116', 'ECN 100']],
+        ['General Education', geWithout('S')],
+        ['Free electives', [free('free-1', 3), free('free-2', 3), free('free-3', 2)]],
+      ],
+      genedBy: { 'MTH 122': 'M', 'CSC 386': 'Y', 'CSC 356': 'I', 'ECN 100': 'S' },
+      waived: ['MTH 111'],
+      layout: [
+        ['ge-GEP', 'ge-Q', 'ge-H', 'MTH 122', 'CIS 116', 'CIS 102'],
+        ['ECN 100', 'ge-R', 'ge-V', 'ge-F', 'CSC 120'],
+        ['ge-L', 'ge-O', 'MTH 281', 'CSC 203'],
+        ['acc', business ? 'BUS 335' : 'HCS 310', 'MTH 243', 'CSC 205', 'CSC 209', 'CIS 206'],
+        ['ge-D', 'BUS 366', 'CIS 117', 'CIS 303', 'CIS 317'],
+        ['ge-W', business ? 'BUS 325' : 'HCS 464', 'CSC 356', 'CIS 422', 'CIS 427'],
+        ['free-1', 'CIS 419', 'CIS 309', 'CIS 442', 'cis-el-1', 'CSC 312'],
+        ['CIS 472', 'CSC 386', 'free-2', 'cis-el-2', 'free-3'],
+      ],
+    };
+  }
+
+  const programs = {
+    'cis-bus': cis('bus'),
+    'cis-hcs': cis('hcs'),
+    'cyb': {
+      name: 'Cybersecurity',
+      discipline: 'CYB',
+      groups: [
+        ['Major core', ['CYB 105', 'CYB 203', 'CYB 205', 'CYB 401', 'CYB 403', 'CYB 405', 'CYB 418', 'CIS 102', 'CIS 117',
+          'CIS 303', 'CIS 309', 'CIS 419', 'CIS 421', 'CSC 120', 'CSC 209', 'CSC 219', 'CSC 356', 'CSC 386']],
+        ['Major electives', [pick('cyb-el', 'CYB elective (CIS or CSC 400-489)', CYB_EL)]],
+        ['Math', ['MTH 243', 'MTH 281']],
+        ['Criminal justice', ['CRJ 101', 'CRJ 422']],
+        ['Prerequisites', ['MTH 111', 'MTH 122']],
+        ['General Education', geWithout('S')],
+        ['Free electives', [free('free-1', 3), free('free-2', 3), free('free-3', 3), free('free-4', 3), free('free-5', 3), free('free-6', 2), free('free-7', 3)]],
+      ],
+      genedBy: { 'MTH 122': 'M', 'CSC 386': 'Y', 'CSC 356': 'I', 'CRJ 101': 'S' },
+      waived: [],
+      layout: [
+        ['ge-GEP', 'ge-Q', 'CIS 102', 'MTH 111', 'CIS 117', 'CRJ 101'],
+        ['free-7', 'CYB 105', 'CSC 120', 'ge-F', 'MTH 122'],
+        ['ge-V', 'MTH 281', 'CYB 203', 'CYB 205'],
+        ['ge-L', 'MTH 243', 'CSC 219', 'ge-H', 'ge-R', 'CSC 209'],
+        ['ge-O', 'CIS 419', 'CRJ 422', 'CSC 356', 'CIS 303'],
+        ['ge-D', 'CIS 309', 'CSC 386', 'ge-W', 'free-1', 'free-2'],
+        ['CYB 401', 'CYB 403', 'CIS 421', 'free-3', 'free-4'],
+        ['CYB 418', 'CYB 405', 'cyb-el', 'free-5', 'free-6'],
+      ],
+    },
+    'csc-ac': {
+      name: 'Computer Science, Advanced Computing',
+      discipline: 'CSC',
+      groups: [
+        ['Major core', ['CIS 117', 'CSC 203', 'CSC 205', 'CSC 209', 'CSC 219', 'CSC 311', 'CSC 312', 'CSC 356', 'CSC 386',
+          'CSC 401', 'CSC 406', 'CSC 414', 'CIS 419', 'CIS 422', 'CSC 427', 'CSC 483']],
+        ['Major electives', [pick('proj', 'Project elective', PROJECT)]],
+        ['Math', ['MTH 201', 'MTH 202', 'MTH 281', 'MTH 481']],
+        ['Science', [{ generic: 'sci-1', label: 'Lab science', cr: 4, ge: 'L' }, { generic: 'sci-2', label: 'Lab science', cr: 4 }]],
+        ['Prerequisites', ['MTH 111', 'MTH 122', 'CSC 120']],
+        ['General Education', geWithout('L')],
+        ['Free electives', [free('free-1', 1), free('free-2', 3), free('free-3', 3), free('free-4', 3), free('free-5', 3)]],
+      ],
+      genedBy: { 'MTH 122': 'M', 'CSC 386': 'Y', 'CSC 356': 'I' },
+      waived: ['MTH 111'],
+      layout: [
+        ['ge-GEP', 'ge-Q', 'ge-H', 'MTH 122', 'CSC 120'],
+        ['ge-S', 'ge-F', 'MTH 281', 'CIS 117', 'CSC 203'],
+        ['ge-R', 'sci-1', 'MTH 201', 'CSC 205', 'CSC 209'],
+        ['ge-V', 'MTH 481', 'CSC 219', 'CSC 311', 'CIS 422'],
+        ['ge-O', 'CIS 419', 'MTH 202', 'CSC 401', 'free-1'],
+        ['ge-D', 'CSC 356', 'CSC 406', 'CSC 414', 'sci-2'],
+        ['ge-W', 'CSC 312', 'CSC 427', 'CSC 386', 'free-2'],
+        ['free-3', 'CSC 483', 'proj', 'free-4', 'free-5'],
+      ],
+    },
+    'csc-sd': {
+      name: 'Computer Science, Software Development',
+      discipline: 'CSC',
+      groups: [
+        ['Major core', ['CIS 117', 'CSC 203', 'CSC 205', 'CSC 209', 'CSC 219', 'CSC 311', 'CSC 312', 'CSC 356', 'CSC 386',
+          'CSC 401', 'CSC 406', 'CSC 427']],
+        ['Major electives', [pick('proj', 'Project elective', PROJECT), pick('sd-el-1', 'CSC elective', SD_EL),
+          pick('sd-el-2', 'CSC elective', SD_EL), pick('sd-el-3', 'CSC elective', SD_EL), pick('sd-el-4', 'CSC elective', SD_EL)]],
+        ['Math', ['MTH 201', 'MTH 281', 'MTH 481']],
+        ['Prerequisites', ['MTH 111', 'MTH 122', 'CSC 120']],
+        ['General Education', GE_FULL],
+        ['Free electives', [1, 2, 3, 4, 5, 6, 7].map((n) => free('free-' + n, 3))],
+      ],
+      genedBy: { 'MTH 122': 'M', 'CSC 386': 'Y', 'CSC 356': 'I' },
+      waived: ['MTH 111'],
+      layout: [
+        ['ge-GEP', 'ge-Q', 'ge-H', 'MTH 122', 'CSC 120'],
+        ['ge-S', 'ge-F', 'MTH 281', 'CIS 117', 'CSC 203'],
+        ['ge-R', 'ge-V', 'MTH 201', 'CSC 205', 'CSC 209'],
+        ['ge-L', 'MTH 481', 'CSC 219', 'CSC 311', 'ge-O'],
+        ['ge-D', 'CSC 312', 'sd-el-1', 'free-1', 'CSC 427'],
+        ['ge-W', 'CSC 356', 'CSC 406', 'free-2', 'sd-el-2'],
+        ['free-3', 'free-4', 'CSC 401', 'CSC 386', 'sd-el-3'],
+        ['free-5', 'sd-el-4', 'proj', 'free-6', 'free-7'],
+      ],
+    },
+  };
+
+  const num = (code) => parseInt(code.split(' ')[1], 10);
+  const minors = {
+    CIS: {
+      name: 'CIS minor', fixed: ['CIS 116', 'CSC 120', 'MTH 122', 'CSC 203', 'CIS 102', 'CIS 206'], need: 10,
+      poolText: 'CIS 300-489, CSC 205 or CSC 209',
+      pool: (c) => (c.startsWith('CIS') && num(c) >= 300 && num(c) <= 489) || c === 'CSC 205' || c === 'CSC 209',
+    },
+    CSC: {
+      name: 'CSC minor', fixed: ['CSC 120', 'MTH 122', 'MTH 281', 'CSC 203', 'CSC 205', 'CSC 209'], need: 9,
+      poolText: 'CSC 300-489, except CSC 356 and CSC 386',
+      pool: (c) => c.startsWith('CSC') && num(c) >= 300 && num(c) <= 489 && c !== 'CSC 356' && c !== 'CSC 386',
+    },
+    CYB: {
+      name: 'CYB minor', fixed: ['CSC 120', 'CYB 105', 'CYB 205', 'CYB 203', 'CSC 209', 'CSC 219', 'CIS 419'], need: 3,
+      poolText: 'any CYB 400-489, CIS 421 or CRJ 422',
+      pool: (c) => (c.startsWith('CYB') && num(c) >= 400 && num(c) <= 489) || c === 'CIS 421' || c === 'CRJ 422',
+    },
+  };
+
+  const rules = {
+    total: 120, brockport: 30, majorBrockport: 18, minorBrockport: 9, upper: 48, discipline: 54,
+    suny: 31, maxLoad: 18, minLoad: 12, lateFromTerm: 4,
+    majorGroups: ['Major core', 'Major electives'],
+  };
+
+  return { asOf: '2026-11-23', courses, alias, gened, programs, minors, rules };
+});
+
+</script>
+<script>
+/* Rule engine for the degree planner. Pure functions over a plan object; no DOM. */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory;
+  else root.makeEngine = factory;
+})(typeof self !== 'undefined' ? self : this, function (DATA) {
+  const R = DATA.rules;
+  const norm = (c) => DATA.alias[c] || c;
+  const course = (c) => DATA.courses[norm(c)];
+  const num = (c) => parseInt(c.split(' ')[1], 10);
+  const prefix = (c) => c.split(' ')[0];
+  const OFF_TEXT = { FS: 'fall and spring', F: 'fall only', S: 'spring only', IRR: 'irregular', UNK: 'unknown' };
+
+  /* ---------- terms ---------- */
+  function termInfo(plan, t) {
+    const k = (plan.start.season === 'F' ? 0 : 1) + t;
+    const season = k % 2 === 0 ? 'F' : 'S';
+    const baseFall = plan.start.season === 'F' ? plan.start.year : plan.start.year - 1;
+    const year = season === 'F' ? baseFall + k / 2 : baseFall + (k + 1) / 2;
+    return { season, year, label: (season === 'F' ? 'Fall ' : 'Spring ') + year };
+  }
+  const termOf = (where) => (/^T\d+$/.test(where) ? parseInt(where.slice(1), 10) : null);
+  const posOf = (item) => {
+    const t = termOf(item.where);
+    if (t !== null) return t;
+    return item.where === 'transfer' || item.where === 'waived' ? -1 : null;
+  };
+
+  /* ---------- items ---------- */
+  const codeOf = (item) => (item.kind === 'course' ? norm(item.code) : item.kind === 'pick' && item.choice ? norm(item.choice) : null);
+  function crOf(item) {
+    const c = codeOf(item);
+    if (c && course(c)) return course(c).cr;
+    return item.cr || 3;
+  }
+  function labelOf(item) {
+    const c = codeOf(item);
+    if (c) return c;
+    return item.label || 'Course';
+  }
+  function titleOf(item) {
+    const c = codeOf(item);
+    if (c && course(c)) return course(c).t;
+    if (item.kind === 'pick') return 'Choose a course';
+    return item.ge && item.ge !== 'GEP' && item.ge !== 'Q' ? 'General Education (' + bucketsOf(item).join(' + ') + ')' : '';
+  }
+  // General Education buckets a card fills: its own, plus any it is marked as also filling (a waived card fills only its own).
+  const isGeSlot = (item) => item.kind === 'generic' && item.group === 'General Education' && !!item.ge && item.ge !== 'GEP' && item.ge !== 'Q';
+  const alsoOf = (item) => (item.where !== 'waived' && Array.isArray(item.also) ? item.also : []);
+  const bucketsOf = (item) => (item.ge ? [item.ge] : []).concat(alsoOf(item));
+  // Slots whose bucket is filled by another card: they drop out of the plan until that is undone.
+  function coverage(plan) {
+    const by = new Map();      // bucket code -> the card that also fills it
+    for (const it of plan.items) for (const k of alsoOf(it)) if (k !== it.ge && !by.has(k)) by.set(k, it);
+    const covered = new Map(); // covered slot id -> covering card
+    for (const it of plan.items) if (isGeSlot(it) && by.has(it.ge) && by.get(it.ge) !== it) covered.set(it.id, by.get(it.ge));
+    return covered;
+  }
+  function setAlso(plan, id, code, on) {
+    const a = find(plan, id);
+    if (!a || !isGeSlot(a) || a.ge === code || !DATA.gened[code]) return;
+    for (const it of plan.items) if (Array.isArray(it.also)) it.also = it.also.filter((k) => k !== code);   // one card per bucket
+    if (!on) return;
+    for (const it of plan.items) if (Array.isArray(it.also)) it.also = it.also.filter((k) => k !== a.ge);   // a card that fills others is not itself covered
+    const target = plan.items.find((i) => isGeSlot(i) && i.ge === code);
+    if (target) target.also = [];                                                                            // a covered slot stops covering others
+    a.also = (a.also || []).concat(code);
+  }
+  const isUpper = (item) => {
+    const c = codeOf(item);
+    if (c) return num(c) >= 300;
+    if (item.kind === 'pick') return item.pool.every((p) => num(p) >= 300);
+    return !!item.upper;
+  };
+
+  function expandTemplate(programId) {
+    const p = DATA.programs[programId];
+    const items = [];
+    for (const [group, list] of p.groups) {
+      for (const e of list) {
+        if (typeof e === 'string') {
+          items.push({ id: e, kind: 'course', code: e, group, origin: 'program', ge: p.genedBy[e] || null });
+        } else if (e.pick) {
+          items.push({ id: e.pick, kind: 'pick', label: e.label, pool: e.pool.slice(), choice: e.choice, cr: 3, group, origin: 'program' });
+        } else if (e.generic) {
+          items.push({ id: e.generic, kind: 'generic', label: e.label, cr: e.cr, ge: e.ge || null, group, origin: 'program', upper: false });
+        } else if (e.ge) {
+          const g = DATA.gened[e.ge];
+          items.push({ id: 'ge-' + e.ge, kind: 'generic', label: g.label, cr: g.cr, ge: e.ge, group, origin: 'program', upper: false, also: [] });
+        } else if (e.free) {
+          items.push({ id: e.free, kind: 'generic', label: 'Free elective', cr: e.cr, group, origin: 'program', upper: false, removable: true });
+        }
+      }
+    }
+    return items;
+  }
+
+  function newPlan(programId, opts) {
+    opts = opts || {};
+    const p = DATA.programs[programId];
+    const plan = {
+      app: 'brockport-cs-planner', v: 1, label: opts.label || '', program: programId, minor: null,
+      start: opts.start || { season: 'F', year: 2026 }, nTerms: p.layout.length, done: 0, intl: false,
+      items: expandTemplate(programId), seq: 1,
+    };
+    const whereById = {};
+    p.layout.forEach((ids, t) => ids.forEach((id) => { whereById[id] = 'T' + t; }));
+    for (const it of plan.items) {
+      it.where = whereById[it.id] || 'unplaced';
+      if (it.kind === 'course' && p.waived.includes(it.code)) it.where = 'waived';
+    }
+    if (opts.intl) setIntl(plan, true);
+    if (opts.minor) setMinor(plan, opts.minor);
+    return plan;
+  }
+
+  const find = (plan, id) => plan.items.find((i) => i.id === id);
+  const hasCode = (plan, code) => plan.items.some((i) => codeOf(i) === norm(code));
+
+  function addCourse(plan, code, origin) {
+    code = norm(code);
+    if (!course(code) || hasCode(plan, code)) return null;
+    const item = { id: 'x' + plan.seq++, kind: 'course', code, group: origin === 'minor' ? 'Minor' : 'Added', origin: origin || 'extra', where: 'unplaced', removable: true };
+    plan.items.push(item);
+    return item;
+  }
+  function addFree(plan, cr) {
+    const item = { id: 'x' + plan.seq++, kind: 'generic', label: 'Free elective', cr: cr || 3, group: 'Free electives', origin: 'extra', where: 'unplaced', upper: false, removable: true, suny: false };
+    plan.items.push(item);
+    return item;
+  }
+  function removeItem(plan, id) {
+    const it = find(plan, id);
+    if (it && it.removable) plan.items = plan.items.filter((i) => i.id !== id);
+  }
+  function setIntl(plan, on) {
+    plan.intl = !!on;
+    const r = find(plan, 'ge-R');
+    if (!r) return;
+    if (on) r.where = 'waived';
+    else if (r.where === 'waived') r.where = 'unplaced';
+  }
+  function setMinor(plan, minorId) {
+    plan.items = plan.items.filter((i) => !(i.origin === 'minor' && i.where === 'unplaced'));
+    plan.items.forEach((i) => { if (i.origin === 'minor') i.origin = 'extra'; });
+    plan.minor = minorId || null;
+    if (!plan.minor) return;
+    for (const code of DATA.minors[plan.minor].fixed) if (!hasCode(plan, code)) addCourse(plan, code, 'minor');
+  }
+  function setTerms(plan, n) {
+    n = Math.max(1, Math.min(16, n));
+    for (const it of plan.items) { const t = termOf(it.where); if (t !== null && t >= n) it.where = 'unplaced'; }
+    plan.nTerms = n;
+    plan.done = Math.min(plan.done || 0, n);
+  }
+  function setDone(plan, n) { plan.done = Math.max(0, Math.min(plan.nTerms, n | 0)); }
+  const minorsFor = (programId) => Object.keys(DATA.minors).filter((m) => m !== DATA.programs[programId].discipline);
+
+  /* ---------- validation ---------- */
+  function positions(plan) {
+    const pos = new Map();   // code -> earliest position (-1 = before Brockport), only for items that have a position
+    const any = new Map();   // code -> item, for every item carrying that code
+    for (const it of plan.items) {
+      const c = codeOf(it);
+      if (!c) continue;
+      if (!any.has(c)) any.set(c, it);
+      const p = posOf(it);
+      if (p !== null && (!pos.has(c) || p < pos.get(c))) pos.set(c, p);
+    }
+    return { pos, any };
+  }
+  const optionsOf = (term) => (Array.isArray(term) ? term.map(norm) : [norm(term)]);
+  function unmet(expr, t, strict, pos) {
+    const out = [];
+    for (const term of expr || []) {
+      const ok = optionsOf(term).some((c) => pos.has(c) && (strict ? pos.get(c) < t : pos.get(c) <= t));
+      if (!ok) out.push(optionsOf(term));
+    }
+    return out;
+  }
+  const orText = (opts) => (opts.length === 1 ? opts[0] : 'one of ' + opts.join(', '));
+
+  // Problems that belong to one item sitting in term t (offering, prerequisites, corequisites).
+  function itemProblems(plan, item, t, P) {
+    const out = [];
+    const c = codeOf(item);
+    if (!c || !course(c)) return out;
+    const info = course(c);
+    const term = termInfo(plan, t);
+    if ((info.off === 'F' && term.season !== 'F') || (info.off === 'S' && term.season !== 'S')) {
+      out.push({ sev: 'error', kind: 'offering', msg: c + ' is offered in ' + (info.off === 'F' ? 'fall' : 'spring') + ' only, and ' + term.label + ' is a ' + (term.season === 'F' ? 'fall' : 'spring') + ' term.' });
+    } else if (info.off === 'IRR') {
+      out.push({ sev: 'warn', kind: 'offering', msg: c + ' is offered irregularly. Confirm it runs in ' + term.label + '.' });
+    } else if (info.off === 'UNK') {
+      out.push({ sev: 'warn', kind: 'offering', msg: c + ' has no known offering term. Check the schedule for ' + term.label + '.' });
+    }
+    const describe = (opts, word) => {
+      const present = opts.filter((o) => P.any.has(o));
+      if (!present.length) {
+        const tail = opts.length === 1 ? 'it is not in the plan.' : 'none of them is in the plan.';
+        return { sev: 'error', kind: 'prereq', msg: c + ' needs ' + orText(opts) + ' ' + word + ', and ' + tail, add: opts };
+      }
+      const o = present[0];
+      const it = P.any.get(o);
+      const where = termOf(it.where) !== null ? 'in ' + termInfo(plan, termOf(it.where)).label : 'not placed yet';
+      return { sev: 'error', kind: 'prereq', msg: c + ' needs ' + orText(opts) + ' ' + word + '. ' + o + ' is ' + where + '.' };
+    };
+    for (const opts of unmet(info.pre, t, true, P.pos)) out.push(describe(opts, 'in an earlier semester'));
+    for (const opts of unmet(info.co, t, false, P.pos)) out.push(describe(opts, 'in the same semester or earlier'));
+    return out;
+  }
+
+  function validate(plan) {
+    const P = positions(plan);
+    const issues = [];
+    const push = (o, item) => issues.push(Object.assign({ itemId: item ? item.id : null }, o));
+    const terms = [];
+    const done = plan.done || 0;
+    const covered = coverage(plan);
+    for (let t = 0; t < plan.nTerms; t++) terms.push(Object.assign({ credits: 0, done: t < done }, termInfo(plan, t)));
+
+    // duplicates and cross-listed twins
+    const seen = new Map();
+    for (const it of plan.items) {
+      const c = codeOf(it);
+      if (!c) continue;
+      if (seen.has(c)) push({ sev: 'error', kind: 'duplicate', msg: c + ' is in the plan twice.' }, it);
+      seen.set(c, it);
+      const twin = course(c) && course(c).twin;
+      if (twin && seen.has(twin)) push({ sev: 'error', kind: 'duplicate', msg: c + ' and ' + twin + ' are the same cross-listed course. Keep one.' }, it);
+    }
+
+    let total = 0, brockport = 0, majorBrockport = 0, upper = 0, suny = 0, unplacedCr = 0, unplacedN = 0, freeCr = 0, earned = 0;
+    const byPrefix = {};
+    for (const it of plan.items) {
+      if (covered.has(it.id)) continue;
+      const cr = crOf(it);
+      const t = termOf(it.where);
+      const c = codeOf(it);
+      const counts = it.where !== 'waived';
+      if (it.where === 'unplaced') { unplacedCr += cr; unplacedN++; }
+      if (counts) {
+        total += cr;
+        if (isUpper(it)) upper += cr;
+        if (c) byPrefix[prefix(c)] = (byPrefix[prefix(c)] || 0) + cr;
+        if (it.suny || bucketsOf(it).some((k) => DATA.gened[k] && DATA.gened[k].suny)) suny += cr;
+        if (it.where !== 'transfer') {
+          brockport += cr;
+          if (R.majorGroups.includes(it.group)) majorBrockport += cr;
+        }
+        if (it.label === 'Free elective' && it.removable) freeCr += cr;
+      }
+      if (it.where === 'transfer') earned += cr;
+      if (t === null) continue;
+      terms[t].credits += cr;
+      if (t < done) {
+        earned += cr;
+        if (it.kind === 'pick' && !it.choice) push({ sev: 'warn', kind: 'choose', msg: 'Choose the course that was taken for the ' + it.label + ' in ' + terms[t].label + '.' }, it);
+        continue;
+      }
+      for (const p of itemProblems(plan, it, t, P)) push(p, it);
+      if (it.kind === 'pick' && !it.choice) push({ sev: 'warn', kind: 'choose', msg: 'Choose a course for the ' + it.label + ' in ' + terms[t].label + '.' }, it);
+      if (c && course(c).late && t < R.lateFromTerm) push({ sev: 'warn', kind: 'soft', msg: c + ' is recommended later in the program (fifth semester or after).' }, it);
+      if (c === 'CIS 472' && !P.pos.has('ACC 280') && (P.pos.has('ACC 281') || P.pos.has('ACC 282'))) {
+        push({ sev: 'warn', kind: 'open', msg: "CIS 472's prerequisite names ACC 280. Whether ACC 281 or 282 counts is not confirmed yet." }, it);
+      }
+    }
+
+    terms.forEach((term, t) => {
+      if (term.done) return;
+      if (term.credits > R.maxLoad) issues.push({ sev: 'warn', kind: 'load', term: t, msg: term.label + ' has ' + term.credits + ' credits, above ' + R.maxLoad + '.' });
+      else if (term.credits > 0 && term.credits < R.minLoad) issues.push({ sev: 'info', kind: 'load', term: t, msg: term.label + ' has ' + term.credits + ' credits, below full time (' + R.minLoad + ').' });
+    });
+
+    if (unplacedN) issues.push({ sev: 'warn', kind: 'unplaced', msg: unplacedN + (unplacedN === 1 ? ' requirement is' : ' requirements are') + ' not placed in a semester yet (' + unplacedCr + ' credits).' });
+    if (total < R.total) issues.push({ sev: 'error', kind: 'total', msg: 'The plan reaches ' + total + ' credits. It needs ' + R.total + ': add ' + (R.total - total) + ' more credits of electives.' });
+    else if (total > R.total && freeCr > 0) issues.push({ sev: 'info', kind: 'total', msg: 'The plan has ' + total + ' credits, ' + (total - R.total) + ' above ' + R.total + '. It includes ' + freeCr + ' credits of free-elective placeholders you could remove.' });
+    if (brockport < R.brockport) issues.push({ sev: 'error', kind: 'residency', msg: 'Only ' + brockport + ' credits are taken at Brockport. The degree needs ' + R.brockport + '.' });
+    if (majorBrockport < R.majorBrockport) issues.push({ sev: 'error', kind: 'residency', msg: 'Only ' + majorBrockport + ' major core and elective credits are taken at Brockport. The department needs ' + R.majorBrockport + '.' });
+    if (upper < R.upper) issues.push({ sev: 'warn', kind: 'upper', msg: upper + ' of ' + R.upper + ' upper-division credits are identified. Mark the General Education or free-elective slots that will be 300/400-level, or add ' + (R.upper - upper) + ' more.' });
+    if (suny < R.suny) issues.push({ sev: 'warn', kind: 'gened', msg: 'SUNY General Education counts ' + suny + ' credits; the audit requires ' + R.suny + '. Add ' + (R.suny - suny) + ' more in a SUNY General Education course.' });
+    for (const [pre, cr] of Object.entries(byPrefix)) {
+      if (cr > R.discipline) issues.push({ sev: 'warn', kind: 'discipline', msg: pre + ' courses add up to ' + cr + ' credits, above the ' + R.discipline + '-credit limit for one discipline.' });
+    }
+
+    const minor = plan.minor ? minorStatus(plan, P) : null;
+    if (minor) {
+      for (const f of minor.fixed) if (!f.inPlan) issues.push({ sev: 'warn', kind: 'minor', msg: minor.name + ': ' + f.code + ' is not in the plan.', add: [f.code] });
+      if (minor.have < minor.need) issues.push({ sev: 'warn', kind: 'minor', msg: minor.name + ': ' + minor.have + ' of ' + minor.need + ' elective credits. Add ' + (minor.need - minor.have) + ' more from ' + minor.poolText + '.' });
+      if (minor.brockport < R.minorBrockport) issues.push({ sev: 'warn', kind: 'minor', msg: minor.name + ': ' + minor.brockport + ' of its credits are taken at Brockport; it needs ' + R.minorBrockport + '.' });
+    }
+
+    // one row per General Education bucket, for the checklist
+    const gened = [];
+    for (const it of plan.items) {
+      if (!it.ge || !DATA.gened[it.ge]) continue;
+      const cov = covered.get(it.id);
+      const t = termOf(it.where);
+      const status = cov ? 'with ' + cov.label + ' (' + cov.ge + ')' : it.where === 'waived' ? 'waived' : it.where === 'transfer' ? 'transfer or AP credit'
+        : t !== null ? terms[t].label : 'not placed';
+      gened.push({ code: it.ge, label: DATA.gened[it.ge].label, by: codeOf(it) || '', status, itemId: cov ? cov.id : it.id, coveredBy: cov ? cov.id : null, open: !cov && it.where === 'unplaced' });
+    }
+    const geOrder = ['GEP', 'Q', 'M', 'Y', 'H', 'F', 'S', 'L', 'R', 'V', 'O', 'D', 'W', 'I'];
+    gened.sort((a, b) => geOrder.indexOf(a.code) - geOrder.indexOf(b.code));
+
+    const order = { error: 0, warn: 1, info: 2 };
+    issues.sort((a, b) => order[a.sev] - order[b.sev]);
+    return {
+      issues, terms, minor, gened, covered,
+      totals: { total, brockport, majorBrockport, upper, suny, unplacedN, unplacedCr, earned },
+      counts: { error: issues.filter((i) => i.sev === 'error').length, warn: issues.filter((i) => i.sev === 'warn').length },
+    };
+  }
+
+  function minorStatus(plan, P) {
+    const m = DATA.minors[plan.minor];
+    const fixedSet = new Set(m.fixed.map(norm));
+    const fixed = m.fixed.map((code) => ({ code, inPlan: P.any.has(norm(code)) }));
+    let have = 0, brock = 0;
+    const electives = [];
+    for (const it of plan.items) {
+      const c = codeOf(it);
+      if (!c || it.where === 'waived') continue;
+      const cr = crOf(it);
+      if (fixedSet.has(c)) { if (it.where !== 'transfer') brock += cr; continue; }
+      if (m.pool(c)) { have += cr; electives.push(c); if (it.where !== 'transfer') brock += cr; }
+    }
+    return { name: m.name, fixed, need: m.need, have, electives, poolText: m.poolText, brockport: brock };
+  }
+
+  // For the "move to" menu: can this item sit in each term?
+  function moveOptions(plan, id) {
+    const item = find(plan, id);
+    const keep = item.where;
+    const out = [];
+    for (let t = 0; t < plan.nTerms; t++) {
+      if (t < (plan.done || 0)) { out.push({ where: 'T' + t, label: termInfo(plan, t).label, ok: true, kind: 'done', reason: '' }); continue; }
+      item.where = 'T' + t;
+      const errs = itemProblems(plan, item, t, positions(plan)).filter((p) => p.sev === 'error');
+      out.push({ where: 'T' + t, label: termInfo(plan, t).label, ok: !errs.length, kind: errs.length ? errs[0].kind : '', reason: errs.length ? errs[0].msg : '' });
+    }
+    item.where = keep;
+    return out;
+  }
+
+  /* ---------- export ---------- */
+  function rows(plan) {
+    const out = [];
+    const line = (where, it, status) => out.push({ where, status: status || where, code: labelOf(it), title: titleOf(it) || (it.kind === 'generic' ? it.label : ''), credits: it.where === 'waived' ? 0 : crOf(it), group: it.group });
+    const covered = coverage(plan);
+    const at = (where) => plan.items.filter((i) => i.where === where && !covered.has(i.id));
+    for (let t = 0; t < plan.nTerms; t++) at('T' + t).forEach((i) => line(termInfo(plan, t).label, i, t < (plan.done || 0) ? 'Completed' : 'Planned'));
+    at('transfer').forEach((i) => line('Transfer or AP credit', i));
+    at('waived').forEach((i) => line('Waived', i));
+    at('unplaced').forEach((i) => line('Not placed', i));
+    return out;
+  }
+  function toText(plan) {
+    const v = validate(plan);
+    const L = [];
+    L.push('Degree plan' + (plan.label ? ': ' + plan.label : ''));
+    L.push(DATA.programs[plan.program].name + (plan.minor ? ' + ' + DATA.minors[plan.minor].name : ''));
+    L.push('');
+    const section = (title, items, credits) => {
+      if (!items.length) return;
+      L.push(title + (credits !== undefined ? ' (' + credits + ' credits)' : ''));
+      for (const i of items) {
+        const t = titleOf(i);
+        L.push('  ' + labelOf(i) + (t && t !== labelOf(i) ? '  ' + t : '') + '  ' + (i.where === 'waived' ? 'waived' : crOf(i) + ' cr'));
+      }
+      L.push('');
+    };
+    const at = (where) => plan.items.filter((i) => i.where === where && !v.covered.has(i.id));
+    for (let t = 0; t < plan.nTerms; t++) section(v.terms[t].label + (v.terms[t].done ? ', completed' : ''), at('T' + t), v.terms[t].credits);
+    section('Transfer or AP credit', at('transfer'));
+    section('Waived', at('waived'));
+    section('Not placed yet', at('unplaced'));
+    L.push('Total credits: ' + v.totals.total + ' of ' + R.total + '. At Brockport: ' + v.totals.brockport + '.');
+    const errs = v.issues.filter((i) => i.sev === 'error'), warns = v.issues.filter((i) => i.sev === 'warn');
+    if (errs.length) { L.push(''); L.push('Problems to fix:'); errs.forEach((i) => L.push('  - ' + i.msg)); }
+    if (warns.length) { L.push(''); L.push('To confirm:'); warns.forEach((i) => L.push('  - ' + i.msg)); }
+    return L.join('\n');
+  }
+  /* ---------- CSV: a plan as a spreadsheet that loads back ---------- */
+  const CSV_HEAD = ['Semester', 'Status', 'Course', 'Title', 'Credits', 'Requirement', 'GenEd code', 'Also fills', '300/400-level', 'SUNY GenEd elective', 'Slot'];
+  const yes = (b) => (b ? 'yes' : '');
+  function toCsv(plan) {
+    const q = (s) => '"' + String(s === null || s === undefined ? '' : s).replace(/"/g, '""') + '"';
+    const covered = coverage(plan);
+    const done = plan.done || 0;
+    const L = [];
+    const meta = (...cells) => L.push(cells.map(q).join(','));
+    meta('Degree plan file', 'brockport-cs-planner', 2);
+    meta('Plan label', plan.label || '');
+    meta('Curriculum', plan.program, DATA.programs[plan.program].name);
+    meta('Minor', plan.minor || 'None');
+    meta('First semester', plan.start.season === 'F' ? 'Fall' : 'Spring', plan.start.year);
+    meta('Semesters', plan.nTerms);
+    meta('Completed through', done ? termInfo(plan, done - 1).label : 'Nothing yet');
+    meta('International student', plan.intl ? 'yes' : 'no');
+    L.push('');
+    L.push(CSV_HEAD.map(q).join(','));
+    const line = (semester, status, it) => {
+      const c = codeOf(it);
+      L.push([semester, status, c || (it.kind === 'pick' ? it.label : it.label), titleOf(it), it.where === 'waived' ? 0 : crOf(it), it.group,
+        it.ge || '', alsoOf(it).join(' '), yes(it.kind === 'generic' && it.upper), yes(it.suny), it.id].map(q).join(','));
+    };
+    const at = (where) => plan.items.filter((i) => i.where === where && !covered.has(i.id));
+    for (let t = 0; t < plan.nTerms; t++) at('T' + t).forEach((i) => line(termInfo(plan, t).label, t < done ? 'Completed' : 'Planned', i));
+    at('transfer').forEach((i) => line('Transfer or AP credit', 'Transfer', i));
+    at('waived').forEach((i) => line('Waived', 'Waived', i));
+    at('unplaced').forEach((i) => line('Not placed', 'Not placed', i));
+    return '﻿' + L.join('\r\n') + '\r\n';
+  }
+  // Quoted fields, doubled quotes, CR/LF, a leading byte-order mark, and comma, semicolon or tab between cells.
+  function csvRows(text) {
+    text = String(text).replace(/^﻿/, '');
+    const first = text.split(/\r?\n/).find((l) => l.trim()) || '';
+    const count = (ch) => first.split(ch).length - 1;
+    const sep = count(';') > count(',') && count(';') >= count('\t') ? ';' : count('\t') > count(',') ? '\t' : ',';
+    const rows = [];
+    let row = [], cell = '', quoted = false;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (quoted) {
+        if (ch === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else quoted = false; }
+        else cell += ch;
+      } else if (ch === '"' && cell === '') quoted = true;
+      else if (ch === sep) { row.push(cell); cell = ''; }
+      else if (ch === '\n' || ch === '\r') {
+        if (ch === '\r' && text[i + 1] === '\n') i++;
+        row.push(cell); rows.push(row); row = []; cell = '';
+      } else cell += ch;
+    }
+    if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
+    return rows.map((r) => r.map((c) => c.trim()));
+  }
+  function fromCsv(text) {
+    const rows = csvRows(text);
+    const meta = {};
+    let h = -1;
+    for (let i = 0; i < rows.length; i++) {
+      const low = rows[i].map((c) => c.toLowerCase());
+      if (low[0] === 'semester' && low.includes('course')) { h = i; break; }
+      if (low[0]) meta[low[0]] = rows[i].slice(1);
+    }
+    if (h < 0 || !meta['curriculum']) throw new Error('This is not a planner file.');
+    const cur = meta['curriculum'].map((c) => c.toLowerCase());
+    const programId = Object.keys(DATA.programs).find((id) => cur.includes(id) || cur.includes(DATA.programs[id].name.toLowerCase()));
+    if (!programId) throw new Error('This file names a curriculum the planner does not know.');
+    const m = (key) => (meta[key] || [])[0] || '';
+    const fs = meta['first semester'] || [];
+    const plan = {
+      app: 'brockport-cs-planner', v: 1, label: m('plan label'), program: programId, minor: null,
+      start: { season: /^s/i.test(fs[0] || '') ? 'S' : 'F', year: parseInt(fs[1], 10) || 2026 },
+      nTerms: Math.max(1, Math.min(16, parseInt(m('semesters'), 10) || 8)), done: 0, intl: /^y/i.test(m('international student')),
+      items: expandTemplate(programId), seq: 1, savedId: null,
+    };
+    const minorCell = m('minor').toLowerCase();
+    plan.minor = Object.keys(DATA.minors).find((id) => id.toLowerCase() === minorCell || DATA.minors[id].name.toLowerCase() === minorCell) || null;
+    const head = rows[h].map((c) => c.toLowerCase());
+    const col = (name) => head.indexOf(name.toLowerCase());
+    const C = { sem: 0, course: col('Course'), cr: col('Credits'), req: col('Requirement'), also: col('Also fills'), upper: col('300/400-level'), suny: col('SUNY GenEd elective'), slot: col('Slot') };
+    const get = (r, i) => (i >= 0 && r[i] !== undefined ? r[i] : '');
+    const labels = new Map();
+    for (let t = 0; t < 16; t++) labels.set(termInfo(plan, t).label.toLowerCase(), t);
+    const whereOf = (cellText) => {
+      const s = cellText.toLowerCase();
+      if (labels.has(s)) { plan.nTerms = Math.max(plan.nTerms, labels.get(s) + 1); return 'T' + labels.get(s); }
+      if (s.startsWith('transfer')) return 'transfer';
+      if (s.startsWith('waived')) return 'waived';
+      return 'unplaced';
+    };
+    const seen = new Set();
+    const alsoWanted = [];
+    for (const r of rows.slice(h + 1)) {
+      if (!r.some((c) => c)) continue;
+      const slot = get(r, C.slot), courseCell = get(r, C.course), where = whereOf(get(r, C.sem));
+      let it = slot ? plan.items.find((i) => i.id === slot && !seen.has(i.id)) : null;
+      if (!it) {
+        const code = norm(courseCell.toUpperCase().replace(/\s+/g, ' '));
+        if (course(code)) {
+          const dup = plan.items.find((i) => i.kind === 'course' && norm(i.code) === code);
+          if (dup && !seen.has(dup.id)) it = dup;                       // a required course typed without its slot
+          else if (dup) continue;                                        // the same course twice: keep the first
+          else it = addCourse(plan, code, /^minor$/i.test(get(r, C.req)) ? 'minor' : 'extra');
+        } else {
+          it = addFree(plan, 3);
+        }
+        if (!it) continue;
+      }
+      seen.add(it.id);
+      it.where = where;
+      if (it.kind === 'pick') {
+        const code = norm(courseCell.toUpperCase().replace(/\s+/g, ' '));
+        it.choice = it.pool.map(norm).includes(code) ? code : null;
+      }
+      if (it.kind === 'generic') {
+        const cr = parseInt(get(r, C.cr), 10);
+        if (where !== 'waived' && cr >= 1 && cr <= 6) it.cr = cr;
+        it.upper = /^y/i.test(get(r, C.upper));
+        if (!it.ge) it.suny = /^y/i.test(get(r, C.suny));
+        for (const k of get(r, C.also).toUpperCase().split(/[\s,+]+/).filter(Boolean)) alsoWanted.push([it.id, k]);
+      }
+    }
+    // Template cards the file does not list: optional ones were removed on purpose, required ones come back as not placed.
+    plan.items = plan.items.filter((i) => seen.has(i.id) || !i.removable);
+    plan.items.forEach((i) => { if (!seen.has(i.id)) i.where = 'unplaced'; });
+    for (const [id, k] of alsoWanted) setAlso(plan, id, k, true);
+    const doneCell = m('completed through').toLowerCase();
+    plan.done = labels.has(doneCell) ? Math.min(plan.nTerms, labels.get(doneCell) + 1) : Math.max(0, Math.min(plan.nTerms, parseInt(doneCell, 10) || 0));
+    plan.seq = 1 + plan.items.reduce((a, i) => Math.max(a, /^x\d+$/.test(i.id) ? parseInt(i.id.slice(1), 10) : 0), 0);
+    return parsePlan(JSON.stringify(plan));
+  }
+  // A plan from either kind of file this planner writes.
+  const parseAny = (text) => (/^\s*\{/.test(String(text).replace(/^﻿/, '')) ? parsePlan(text) : fromCsv(text));
+  function parsePlan(text) {
+    const p = JSON.parse(text);
+    if (!p || p.app !== 'brockport-cs-planner' || !Array.isArray(p.items) || !DATA.programs[p.program]) throw new Error('This is not a planner file.');
+    p.items = p.items.filter((i) => i && typeof i.id === 'string' && ['course', 'pick', 'generic'].includes(i.kind) && (i.kind !== 'course' || course(i.code)));
+    p.items.forEach((i) => { if (i.kind === 'pick' && i.choice && !course(i.choice)) i.choice = null; });
+    p.items.forEach((i) => { i.also = isGeSlot(i) && Array.isArray(i.also) ? i.also.filter((k) => typeof k === 'string' && DATA.gened[k] && k !== i.ge) : []; });
+    const by = DATA.programs[p.program].genedBy;
+    p.items.forEach((i) => { if (i.kind === 'course' && i.origin === 'program') i.ge = by[norm(i.code)] || null; });
+    const filled = new Set(p.items.filter((i) => i.kind === 'course' && i.ge).map((i) => i.ge));
+    p.items.forEach((i) => {
+      if (i.kind === 'generic' && i.group === 'General Education' && i.ge && filled.has(i.ge)) {
+        p.items.forEach((o) => { if (Array.isArray(o.also)) o.also = o.also.filter((k) => k !== i.ge); });
+        Object.assign(i, { label: 'Free elective', ge: null, group: 'Free electives', removable: true, also: [], suny: false });
+      }
+    });
+    p.nTerms = Math.max(1, Math.min(16, p.nTerms | 0 || 8));
+    p.done = Math.max(0, Math.min(p.nTerms, p.done | 0));
+    p.savedId = typeof p.savedId === 'string' && /^[A-Za-z0-9_-]{1,60}$/.test(p.savedId) ? p.savedId : null;
+    p.start = { season: p.start && p.start.season === 'S' ? 'S' : 'F', year: (p.start && p.start.year | 0) || 2026 };
+    p.seq = (p.seq | 0) || 1000;
+    p.label = String(p.label || '').slice(0, 80);
+    if (p.minor && !DATA.minors[p.minor]) p.minor = null;
+    return p;
+  }
+
+  return {
+    DATA, OFF_TEXT, norm, course, termInfo, termOf, codeOf, crOf, labelOf, titleOf, isUpper, find, hasCode,
+    newPlan, addCourse, addFree, removeItem, setIntl, setMinor, setTerms, setDone, minorsFor,
+    validate, moveOptions, toText, toCsv, fromCsv, parseAny, parsePlan, isGeSlot, bucketsOf, coverage, setAlso,
+  };
+});
+
+</script>
+<script>
+(function () {
+  'use strict';
+  const DATA = window.PLANNER_DATA;
+  const E = window.makeEngine(DATA);
+  const R = DATA.rules;
+  const KEY = 'brockport-cs-planner-v1';
+  const AS_OF = new Date(DATA.asOf + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  let plan, view, downloads = null;
+  let store = null, storeState = 'pending', dirty = false, saving = false;
+  const STANDALONE = !!window.PLANNER_STANDALONE;   // the single-file copy: plans live in CSV files on this computer
+  let fileHandle = null, fileName = '';
+
+  /* ---------- small helpers ---------- */
+  const $ = (sel, root) => (root || document).querySelector(sel);
+  function h(tag, attrs, ...kids) {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (v === null || v === undefined || v === false) continue;
+      if (k === 'class') el.className = v;
+      else if (k === 'text') el.textContent = v;
+      else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+      else if (k === 'value') el.value = v;
+      else if (k === 'checked' || k === 'selected' || k === 'disabled') el[k] = !!v;
+      else el.setAttribute(k, v === true ? '' : v);
+    }
+    for (const kid of kids.flat()) {
+      if (kid === null || kid === undefined || kid === false) continue;
+      el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+    }
+    return el;
+  }
+  const clean = (kids) => kids.flat().filter((k) => k !== null && k !== undefined && k !== false);
+  const put = (el, ...kids) => { el.append(...clean(kids)); return el; };
+  const setKids = (el, ...kids) => { el.replaceChildren(...clean(kids)); return el; };
+  const GROUP_CLASS = {
+    'Major core': 'g-major', 'Major electives': 'g-major',
+    'Math': 'g-cog', 'IS environment': 'g-cog', 'Criminal justice': 'g-cog', 'Science': 'g-cog', 'Prerequisites': 'g-cog',
+    'General Education': 'g-ge', 'Free electives': 'g-free', 'Minor': 'g-extra', 'Added': 'g-extra',
+  };
+  const OFF_TAG = { F: 'Fall only', S: 'Spring only', IRR: 'Irregular', UNK: 'Check schedule' };
+  const MATH_TEXT = { 'MTH 111|MTH 122|MTH 201|MTH 202': 'MTH 111 or higher', 'MTH 122|MTH 201|MTH 202': 'MTH 122 or higher' };
+  function exprText(expr) {
+    if (!expr || !expr.length) return '';
+    return expr.map((term) => {
+      if (!Array.isArray(term)) return term;
+      const known = MATH_TEXT[term.join('|')];
+      if (known) return known;
+      return expr.length > 1 ? '(' + term.join(' or ') + ')' : term.join(' or ');
+    }).join(' and ');
+  }
+  function toast(msg) {
+    const old = $('.toast'); if (old) old.remove();
+    const t = h('div', { class: 'toast', role: 'status', text: msg });
+    document.body.append(t);
+    setTimeout(() => t.remove(), 2600);
+  }
+
+  /* ---------- state ---------- */
+  function restore() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (raw) return E.parsePlan(raw);
+    } catch (e) { /* storage missing or stale: start fresh */ }
+    return E.newPlan('cis-bus');
+  }
+  function persist() {
+    try { localStorage.setItem(KEY, JSON.stringify(plan)); } catch (e) { /* this browser keeps nothing; the plan file is the durable copy */ }
+  }
+  function commit(opts) {
+    dirty = !(opts && opts.clean) && (dirty || !(opts && opts.keep));
+    view = E.validate(plan);
+    persist();
+    syncDone();
+    render();
+    updateStatus();
+  }
+  function updateStatus() {
+    const el = $('#status');
+    if (!el) return;
+    if (STANDALONE) {
+      el.textContent = (fileName || 'Not saved to a file yet') + (dirty ? ' · unsaved changes' : fileName ? ' · saved' : '');
+      el.className = 'status' + (dirty ? ' dirty' : '');
+      return;
+    }
+    el.textContent = storeState !== 'ready' ? '' : dirty ? 'Unsaved changes' : plan.savedId ? 'Saved in My plans' : 'Not saved yet';
+    el.className = 'status' + (dirty && storeState === 'ready' ? ' dirty' : '');
+  }
+  const unsavedNote = () => (dirty ? ' You have unsaved changes.' : '');
+  const withTimeout = (p) => Promise.race([p, new Promise((_, no) => setTimeout(() => no({ code: 'timeout' }), 10000))]);
+  function setWhere(id, where) {
+    const it = E.find(plan, id);
+    if (!it || it.where === where) return;
+    it.where = where;
+    commit();
+  }
+
+  /* ---------- dialogs ---------- */
+  let openDialog = null;
+  function closeDialog() {
+    if (!openDialog) return;
+    const back = openDialog.back;
+    openDialog.el.remove();
+    openDialog = null;
+    if (back && document.contains(back)) back.focus();
+  }
+  function dialog(build) {
+    const back = openDialog ? openDialog.back : document.activeElement;
+    if (openDialog) { openDialog.el.remove(); openDialog = null; }
+    const box = h('div', { class: 'dialog', role: 'dialog', 'aria-modal': 'true' });
+    const el = h('div', { class: 'overlay', onmousedown: (e) => { if (e.target === el) closeDialog(); } }, box);
+    openDialog = { el, box, back, build };
+    build(box);
+    document.body.append(el);
+    const first = box.querySelector('select, input, textarea, button');
+    if (first) first.focus();
+  }
+  function refreshDialog() {
+    if (!openDialog) return;
+    const active = document.activeElement && document.activeElement.id;
+    setKids(openDialog.box);
+    openDialog.build(openDialog.box);
+    if (active && document.getElementById(active)) document.getElementById(active).focus();
+  }
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDialog(); });
+
+  function confirmDialog(title, text, yesLabel, onYes) {
+    dialog((box) => {
+      put(box, 
+        h('h2', { text: title }), h('p', { class: 'sub', text }),
+        h('div', { class: 'row' },
+          h('button', { class: 'btn', type: 'button', onclick: closeDialog, text: 'Cancel' }),
+          h('button', { class: 'btn primary', type: 'button', onclick: () => { closeDialog(); onYes(); }, text: yesLabel }))
+      );
+    });
+  }
+
+  /* ---------- card editor ---------- */
+  function editItem(id) {
+    dialog((box) => {
+      const it = E.find(plan, id);
+      if (!it) { closeDialog(); return; }
+      const code = E.codeOf(it);
+      const info = code ? E.course(code) : null;
+      put(box, h('h2', { text: E.labelOf(it) + (info ? '  ' + info.t : '') }));
+      put(box, h('p', { class: 'sub', text: it.group === 'General Education' ? 'General Education' + (it.ge && it.ge !== 'GEP' ? ', code ' + E.bucketsOf(it).join(' + ') : '') : it.group + (it.ge ? ' · General Education ' + it.ge : '') }));
+
+      const facts = h('dl', { class: 'facts' });
+      const fact = (k, v) => { if (v) put(facts, h('dt', { text: k }), h('dd', { text: v })); };
+      if (it.kind !== 'generic') fact('Credits', it.where === 'waived' ? '0 (waived)' : String(E.crOf(it)));
+      if (info) {
+        fact('Offered', E.OFF_TEXT[info.off] === 'unknown' ? 'unknown; check the schedule' : E.OFF_TEXT[info.off]);
+        fact('Needs first', exprText(info.pre) || 'nothing');
+        fact('Needs with or before', exprText(info.co));
+        if (info.late) fact('Soft rule', 'recommended in the fifth semester or later');
+        if (info.twin) fact('Cross-listed', 'same course as ' + info.twin + '; it counts once');
+        fact('Note', info.note);
+      }
+      if (facts.children.length) put(box, facts);
+
+      if (it.kind === 'pick') {
+        const taken = new Set(plan.items.filter((o) => o.id !== it.id).map(E.codeOf).filter(Boolean));
+        const sel = h('select', { id: 'ed-choice', onchange: (e) => { it.choice = e.target.value || null; commit(); } },
+          h('option', { value: '', text: 'Not chosen yet' }),
+          it.pool.map((c) => h('option', { value: c, selected: it.choice === c, disabled: taken.has(c),
+            text: c + '  ' + E.course(c).t + ' (' + E.OFF_TEXT[E.course(c).off] + ')' + (taken.has(c) ? ', already in the plan' : '') })));
+        put(box, h('div', { class: 'field' }, h('label', { for: 'ed-choice', text: 'Course for this slot' }), sel));
+      }
+      if (it.kind === 'generic') {
+        put(box, h('div', { class: 'pair' },
+          h('div', { class: 'field' }, h('label', { for: 'ed-cr', text: 'Credits' }),
+            h('input', { id: 'ed-cr', type: 'number', min: '1', max: '6', value: String(it.cr),
+              onchange: (e) => { it.cr = Math.max(1, Math.min(6, parseInt(e.target.value, 10) || it.cr)); commit(); } })),
+          h('div', { class: 'field check' },
+            h('input', { id: 'ed-upper', type: 'checkbox', checked: it.upper, onchange: (e) => { it.upper = e.target.checked; commit(); } }),
+            h('label', { for: 'ed-upper', text: 'Will be a 300/400-level course' }))));
+      }
+
+      if (E.isGeSlot(it)) {
+        const others = plan.items.filter((o) => E.isGeSlot(o) && o.id !== it.id);
+        put(box, h('fieldset', { class: 'also' }, h('legend', { text: 'This course also fills' }),
+          others.map((o) => {
+            const cov = view.covered.get(o.id);
+            const cid = 'ed-also-' + o.ge;
+            return h('div', { class: 'field check' },
+              h('input', { id: cid, type: 'checkbox', checked: (it.also || []).includes(o.ge), onchange: (e) => { E.setAlso(plan, it.id, o.ge, e.target.checked); commit(); } }),
+              h('label', { for: cid, text: o.label + ' (' + o.ge + ')' + (cov && cov.id !== it.id ? ', now filled by ' + cov.label : '') }));
+          }),
+          h('p', { class: 'small', text: 'For a course that carries two General Education codes. Its credits count once, and the other bucket no longer needs a course of its own.' })));
+      }
+      if (it.kind === 'generic' && !it.ge && it.group === 'Free electives') {
+        put(box, h('div', { class: 'field check' },
+          h('input', { id: 'ed-suny', type: 'checkbox', checked: !!it.suny, onchange: (e) => { it.suny = e.target.checked; commit(); } }),
+          h('label', { for: 'ed-suny', text: 'A SUNY General Education course (counts toward the 31 credits)' })));
+      }
+
+      const options = E.moveOptions(plan, id);
+      const reason = { offering: 'not offered then', prereq: 'prerequisite not met yet' };
+      const optText = (o) => o.label + (o.kind === 'done' ? ' · completed' : o.ok ? '' : ' · ' + (reason[o.kind] || 'problem'));
+      const where = h('select', { id: 'ed-where', onchange: (e) => setWhere(id, e.target.value) },
+        h('optgroup', { label: 'Semester' }, options.map((o) => h('option', { value: o.where, selected: it.where === o.where,
+          text: optText(o) }))),
+        h('optgroup', { label: 'Not in a semester' },
+          h('option', { value: 'unplaced', selected: it.where === 'unplaced', text: 'Not placed yet' }),
+          h('option', { value: 'transfer', selected: it.where === 'transfer', text: 'Transfer or AP credit (counts toward 120)' }),
+          h('option', { value: 'waived', selected: it.where === 'waived', text: 'Waived or placed out (no credit)' })));
+      const fits = options.filter((o) => o.ok && o.kind !== 'done').map((o) => o.label);
+      put(box, h('div', { class: 'field' }, h('label', { for: 'ed-where', text: 'Where it goes' }), where,
+        code ? h('span', { class: 'hint', text: fits.length ? 'Fits in: ' + fits.join(', ') + '.' : 'No upcoming semester fits yet. Its prerequisites need to come first.' }) : null,
+        info && info.waivable ? h('span', { class: 'hint', text: 'This course is often waived for experience.' }) : null));
+
+      const mine = view.issues.filter((i) => i.itemId === id);
+      if (mine.length) put(box, h('ul', { class: 'issues' }, mine.map((i) => issueRow(i, false))));
+
+      put(box, h('div', { class: 'row' },
+        it.removable ? h('button', { class: 'btn danger left', type: 'button', text: 'Remove from plan', onclick: () => { E.removeItem(plan, id); closeDialog(); commit(); } }) : null,
+        h('button', { class: 'btn primary', type: 'button', text: 'Done', onclick: closeDialog })));
+    });
+  }
+
+  /* ---------- add, open, save ---------- */
+  function addDialog() {
+    dialog((box) => {
+      const have = new Set(plan.items.map(E.codeOf).filter(Boolean));
+      const byPrefix = {};
+      Object.keys(DATA.courses).filter((c) => !have.has(c)).forEach((c) => { (byPrefix[c.split(' ')[0]] = byPrefix[c.split(' ')[0]] || []).push(c); });
+      const sel = h('select', { id: 'add-course' }, Object.entries(byPrefix).map(([p, list]) =>
+        h('optgroup', { label: p }, list.map((c) => h('option', { value: c, text: c + '  ' + DATA.courses[c].t + ' (' + DATA.courses[c].cr + ' cr)' })))));
+      const cr = h('input', { id: 'add-cr', type: 'number', min: '1', max: '6', value: '3' });
+      put(box, h('h2', { text: 'Add to the plan' }),
+        h('p', { class: 'sub', text: 'Added courses land in "Not placed yet". Put them in a semester from there.' }),
+        h('div', { class: 'field' }, h('label', { for: 'add-course', text: 'A course from the department data' }), sel),
+        h('div', { class: 'row' }, h('button', { class: 'btn primary', type: 'button', text: 'Add course',
+          onclick: () => { const it = E.addCourse(plan, sel.value); closeDialog(); commit(); if (it) flash(it.id); } })),
+        h('div', { class: 'field' }, h('label', { for: 'add-cr', text: 'Or a free-elective placeholder, credits' }), cr),
+        h('div', { class: 'row' },
+          h('button', { class: 'btn left', type: 'button', text: 'Cancel', onclick: closeDialog }),
+          h('button', { class: 'btn', type: 'button', text: 'Add free elective',
+            onclick: () => { const it = E.addFree(plan, Math.max(1, Math.min(6, parseInt(cr.value, 10) || 3))); closeDialog(); commit(); flash(it.id); } })));
+    });
+  }
+  function usePlan(next, savedId) {
+    plan = next;
+    if (savedId !== undefined) plan.savedId = savedId;
+    closeDialog(); syncSetup(); commit({ clean: true });
+  }
+  function loadText(text) {
+    try {
+      const next = E.parseAny(text);
+      next.savedId = null;                       // a file is a copy; saving it makes a new entry
+      usePlan(next); dirty = true; updateStatus(); toast('Plan loaded');
+    } catch (e) {
+      toast('That is not a planner file. Choose a file saved from this page.');
+    }
+  }
+  const slug = () => (plan.label || DATA.programs[plan.program].name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'plan';
+  async function saveFile(ext, data) {
+    try {
+      await downloads.save({ filename: 'degree-plan-' + slug() + '.' + ext, data });
+      toast('File saved');
+    } catch (e) {
+      toast(e && e.code === 'declined' ? 'Save cancelled' : 'This view cannot save files. Use "Copy plan data" instead.');
+    }
+  }
+  async function copy(text, done) {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast(done);
+    } catch (e) {
+      dialog((box) => {
+        const area = h('textarea', { id: 'copy-text', readonly: true });
+        area.value = text;
+        put(box, h('h2', { text: 'Copy this text' }),
+          h('p', { class: 'sub', text: 'This view cannot reach the clipboard. Select the text and copy it.' }),
+          h('div', { class: 'field' }, h('label', { for: 'copy-text', text: 'Plan' }), area),
+          h('div', { class: 'row' }, h('button', { class: 'btn primary', type: 'button', text: 'Done', onclick: closeDialog })));
+        setTimeout(() => area.select(), 0);
+      });
+    }
+  }
+  function filesDialog() {
+    dialog((box) => {
+      const file = h('input', { id: 'open-file', type: 'file', accept: '.csv,.json,text/csv,application/json',
+        onchange: (e) => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => loadText(String(r.result)); r.readAsText(f); } });
+      const area = h('textarea', { id: 'open-text', placeholder: 'Paste plan data here' });
+      put(box, h('h2', { text: 'Plan files' }),
+        h('p', { class: 'sub', text: 'Files are a copy you keep yourself. The .csv opens in Excel and loads back here, also in the standalone planner.' }),
+        h('h4', { text: 'Save the plan on screen' }),
+        h('div', { class: 'row start' },
+          downloads ? h('button', { class: 'btn', type: 'button', text: 'Spreadsheet plan (.csv)', onclick: () => saveFile('csv', E.toCsv(plan)) }) : null,
+          downloads ? h('button', { class: 'btn', type: 'button', text: 'Plan file (.json)', onclick: () => saveFile('json', JSON.stringify(plan, null, 1)) }) : null,
+          h('button', { class: 'btn', type: 'button', text: 'Copy plan data', onclick: () => copy(JSON.stringify(plan), 'Plan data copied') })),
+        downloads ? null : h('p', { class: 'small', text: 'File saving is not available in this view. "Copy plan data" gives text you can paste back below.' }),
+        h('h4', { text: 'Open a plan' }),
+        h('p', { class: 'small', text: 'This replaces the plan on screen.' + unsavedNote() }),
+        h('div', { class: 'field' }, h('label', { for: 'open-file', text: 'Plan file (.csv or .json) saved from this planner' }), file),
+        h('div', { class: 'field' }, h('label', { for: 'open-text', text: 'Or pasted plan data' }), area),
+        h('div', { class: 'row' },
+          h('button', { class: 'btn', type: 'button', text: 'Close', onclick: closeDialog }),
+          h('button', { class: 'btn primary', type: 'button', text: 'Load pasted data', onclick: () => loadText(area.value) })));
+    });
+  }
+
+  /* ---------- standalone copy: plans are CSV files on this computer ---------- */
+  const CSV_TYPES = [{ description: 'Degree plan (CSV)', accept: { 'text/csv': ['.csv'] } }];
+  function downloadFile(name, text) {
+    const url = URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' }));
+    const a = h('a', { href: url, download: name });
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+  async function saveLocal(asNew) {
+    const suggested = 'degree-plan-' + slug() + '.csv';
+    if (typeof window.showSaveFilePicker === 'function') {
+      try {
+        if (asNew || !fileHandle) fileHandle = await window.showSaveFilePicker({ suggestedName: asNew || !fileName ? suggested : fileName, types: CSV_TYPES });
+        const w = await fileHandle.createWritable();
+        await w.write(E.toCsv(plan)); await w.close();
+        fileName = fileHandle.name; dirty = false; updateStatus(); toast('Saved to ' + fileName);
+        return;
+      } catch (e) {
+        if (e && e.name === 'AbortError') return;      // the person closed the file dialog
+        fileHandle = null;                              // this browser refused: fall back to a download
+      }
+    }
+    const name = asNew || !fileName ? suggested : fileName;
+    downloadFile(name, E.toCsv(plan));
+    fileName = name; dirty = false; updateStatus(); toast('Saved to your downloads as ' + name);
+  }
+  function applyFile(text, name, handle) {
+    try {
+      const next = E.parseAny(text);
+      next.savedId = null;
+      usePlan(next);
+      fileName = name || ''; fileHandle = handle && /\.csv$/i.test(name || '') ? handle : null;
+      updateStatus(); toast('Opened ' + (name || 'plan'));
+    } catch (e) {
+      toast('That is not a planner file. Choose a .csv saved from this planner.');
+    }
+  }
+  function openLocal() {
+    const go = async () => {
+      if (typeof window.showOpenFilePicker === 'function') {
+        try {
+          const [handle] = await window.showOpenFilePicker({ types: [{ description: 'Degree plan', accept: { 'text/csv': ['.csv'], 'application/json': ['.json'] } }] });
+          const f = await handle.getFile();
+          applyFile(await f.text(), f.name, handle);
+          return;
+        } catch (e) {
+          if (e && e.name === 'AbortError') return;
+        }
+      }
+      $('#file-open').click();
+    };
+    if (dirty) confirmDialog('Open another plan?', 'It replaces the plan on screen. You have unsaved changes.', 'Open', go);
+    else go();
+  }
+
+  /* ---------- My plans: saved privately for the signed-in viewer ---------- */
+  const newId = () => 'plan-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+  const storeError = (e) => (e && e.code === 'quota_exceeded' ? 'Your saved plans are full. Delete some and try again.'
+    : e && e.code === 'invalid_argument' ? 'This account can view the page but cannot save plans to it.'
+    : 'Saved plans cannot be reached right now. Try again, or save a file instead.');
+  async function saveToList(asNew) {
+    if (storeState !== 'ready') { filesDialog(); return; }
+    if (!(plan.label || '').trim()) { labelDialog(asNew); return; }
+    if (saving) return;
+    saving = true;
+    const id = !asNew && plan.savedId ? plan.savedId : newId();
+    const before = plan.savedId;
+    plan.savedId = id;
+    try {
+      await withTimeout(store.doc(id).set({ kind: 'plan', label: plan.label.trim(), program: plan.program, minor: plan.minor || '',
+        updatedAt: new Date().toISOString(), json: JSON.stringify(plan) }));
+      dirty = false; persist(); toast(asNew ? 'Saved as a new plan' : 'Saved in My plans');
+    } catch (e) {
+      plan.savedId = before; toast(storeError(e));
+    }
+    saving = false;
+    updateStatus();
+  }
+  function labelDialog(asNew) {
+    dialog((box) => {
+      const input = h('input', { id: 'need-label', type: 'text', maxlength: '80', placeholder: 'For example: Advisee A, transfer' });
+      const go = () => { const v = input.value.trim(); if (!v) { input.focus(); return; } plan.label = v; $('#f-label').value = v; closeDialog(); saveToList(asNew); };
+      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+      put(box, h('h2', { text: 'Name this plan' }),
+        h('p', { class: 'sub', text: 'The label is how you will find it in My plans. No student names or ID numbers.' }),
+        h('div', { class: 'field' }, h('label', { for: 'need-label', text: 'Plan label' }), input),
+        h('div', { class: 'row' },
+          h('button', { class: 'btn', type: 'button', text: 'Cancel', onclick: closeDialog }),
+          h('button', { class: 'btn primary', type: 'button', text: 'Save', onclick: go })));
+    });
+  }
+  function plansDialog() {
+    const state = { status: storeState === 'ready' ? 'loading' : storeState === 'pending' ? 'pending' : 'none', rows: [] };
+    const when = (iso) => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }); };
+    const build = (box) => {
+      put(box, h('h2', { text: 'My plans' }),
+        h('p', { class: 'sub', text: 'Plans you save here are kept with this page, privately for your account.' }));
+      if (state.status === 'none') put(box, h('p', { class: 'small', text: 'Saved plans are not available in this view. Open the page signed in on claude.ai, or use Files to keep plans as files.' }));
+      else if (state.status === 'pending' || state.status === 'loading') put(box, h('p', { class: 'small', text: 'Loading your plans…' }));
+      else if (state.status === 'error') put(box, h('p', { class: 'small', text: 'Saved plans cannot be reached right now. Close this and try again in a moment.' }));
+      else if (!state.rows.length) put(box, h('p', { class: 'small', text: 'Nothing saved yet. Use Save to keep the plan on screen.' }));
+      else put(box, h('ul', { class: 'planlist' }, state.rows.map((r) => h('li', { class: 'planrow' + (r.id === plan.savedId ? ' current' : '') },
+        h('div', { class: 'who' }, h('strong', { text: r.label || 'Untitled plan' }),
+          h('span', { text: [DATA.programs[r.program] ? DATA.programs[r.program].name : '', r.minor && DATA.minors[r.minor] ? DATA.minors[r.minor].name : '', when(r.updatedAt)].filter(Boolean).join(' · ') })),
+        h('button', { class: 'btn small', type: 'button', text: r.id === plan.savedId ? 'Reopen' : 'Open', onclick: () => openSaved(r) }),
+        h('button', { class: 'btn small danger', type: 'button', text: 'Delete', 'aria-label': 'Delete ' + (r.label || 'plan'), onclick: () => deleteSaved(r) })))));
+      put(box, h('div', { class: 'row' },
+        storeState === 'ready' ? h('button', { class: 'btn left', type: 'button', text: 'Save the plan on screen as new', onclick: () => { closeDialog(); saveToList(true); } }) : null,
+        h('button', { class: 'btn primary', type: 'button', text: 'Close', onclick: closeDialog })));
+    };
+    dialog(build);
+    if (state.status !== 'loading') return;
+    withTimeout(store.get()).then((snap) => {
+      state.rows = snap.docs.filter((d) => d.exists).map((d) => Object.assign({ id: d.id }, d.data()))
+        .filter((r) => r.kind === 'plan' && typeof r.json === 'string')
+        .sort((x, y) => String(y.updatedAt || '').localeCompare(String(x.updatedAt || '')));
+      state.status = 'ready';
+    }).catch(() => { state.status = 'error'; }).then(() => { if (openDialog && openDialog.build === build) refreshDialog(); });
+  }
+  function openSaved(r) {
+    const go = () => {
+      try { usePlan(E.parsePlan(r.json), r.id); toast('Opened ' + (r.label || 'plan')); }
+      catch (e) { toast('That saved plan could not be read.'); }
+    };
+    if (dirty) confirmDialog('Open this plan?', 'It replaces the plan on screen. You have unsaved changes.', 'Open', go);
+    else go();
+  }
+  function deleteSaved(r) {
+    confirmDialog('Delete this saved plan?', '"' + (r.label || 'Untitled plan') + '" will be removed from My plans. This cannot be undone.', 'Delete', async () => {
+      try {
+        await withTimeout(store.doc(r.id).delete());
+        if (plan.savedId === r.id) { plan.savedId = null; dirty = true; persist(); updateStatus(); }
+        toast('Deleted');
+      } catch (e) { toast(storeError(e)); }
+      plansDialog();
+    });
+  }
+
+  /* ---------- setup strip (built once) ---------- */
+  function buildSetup() {
+    const root = $('#setup');
+    const program = h('select', { id: 'f-program', onchange: (e) => {
+      const next = e.target.value;
+      e.target.value = plan.program;
+      confirmDialog('Switch curriculum?', 'This replaces the plan on screen with the default layout for ' + DATA.programs[next].name + '.' + unsavedNote(), 'Switch', () => {
+        plan = E.newPlan(next, { start: plan.start, label: plan.label, intl: plan.intl });
+        syncSetup(); commit();
+      });
+    } }, Object.entries(DATA.programs).map(([id, p]) => h('option', { value: id, text: p.name })));
+    root.append(
+      h('div', { class: 'field wide' }, h('label', { for: 'f-label', text: 'Plan label' }),
+        h('input', { id: 'f-label', type: 'text', maxlength: '80', placeholder: 'For example: Advisee A, transfer',
+          oninput: (e) => { plan.label = e.target.value; dirty = true; persist(); updateStatus(); } }),
+        h('span', { class: 'hint', text: 'No student names or ID numbers.' })),
+      h('div', { class: 'field wide' }, h('label', { for: 'f-program', text: 'Curriculum' }), program),
+      h('div', { class: 'field' }, h('label', { for: 'f-minor', text: 'Minor' }),
+        h('select', { id: 'f-minor', onchange: (e) => { E.setMinor(plan, e.target.value || null); commit(); } })),
+      h('div', { class: 'field' }, h('span', { class: 'lbl', text: 'First semester' }),
+        h('div', { class: 'pair' },
+          h('select', { id: 'f-season', 'aria-label': 'First semester, season', onchange: (e) => { plan.start.season = e.target.value; commit(); } },
+            h('option', { value: 'F', text: 'Fall' }), h('option', { value: 'S', text: 'Spring' })),
+          h('input', { id: 'f-year', type: 'number', min: '2015', max: '2040', 'aria-label': 'First semester, year',
+            onchange: (e) => { plan.start.year = Math.max(2015, Math.min(2040, parseInt(e.target.value, 10) || plan.start.year)); e.target.value = plan.start.year; commit(); } }))),
+      h('div', { class: 'field' }, h('label', { for: 'f-done', text: 'Completed through' }),
+        h('select', { id: 'f-done', onchange: (e) => { E.setDone(plan, parseInt(e.target.value, 10) || 0); commit(); } })),
+      h('div', { class: 'field check' },
+        h('input', { id: 'f-intl', type: 'checkbox', onchange: (e) => { E.setIntl(plan, e.target.checked); commit(); } }),
+        h('label', { for: 'f-intl', text: 'International student (World Language waived)' })));
+  }
+  function syncDone() {
+    const sel = $('#f-done');
+    const have = Array.from(sel.options).map((o) => o.value + '|' + o.textContent);
+    const next = [['0', 'Nothing yet']].concat(view.terms.map((t, i) => [String(i + 1), t.label]));
+    if (have.join() !== next.map((n) => n.join('|')).join()) setKids(sel, ...next.map(([v, text]) => h('option', { value: v, text })));
+    sel.value = String(plan.done || 0);
+  }
+  function syncSetup() {
+    $('#f-label').value = plan.label || '';
+    $('#f-program').value = plan.program;
+    $('#f-season').value = plan.start.season;
+    $('#f-year').value = plan.start.year;
+    $('#f-intl').checked = !!plan.intl;
+    const minor = $('#f-minor');
+    setKids(minor, h('option', { value: '', text: 'None' }),
+      ...E.minorsFor(plan.program).map((m) => h('option', { value: m, text: DATA.minors[m].name, selected: plan.minor === m })));
+  }
+
+  /* ---------- rendering ---------- */
+  function flash(id) {
+    const el = document.querySelector('[data-id="' + CSS.escape(id) + '"]');
+    if (!el) return;
+    el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+  }
+  function card(it, marks, locked) {
+    const code = E.codeOf(it);
+    const info = code ? E.course(code) : null;
+    const m = marks.get(it.id) || { error: 0, warn: 0 };
+    const tags = [];
+    if (info && OFF_TAG[info.off]) tags.push(h('span', { class: 'tag', text: OFF_TAG[info.off] }));
+    if (it.kind === 'generic' && it.upper) tags.push(h('span', { class: 'tag', text: '300/400-level' }));
+    if (m.error) tags.push(h('span', { class: 'tag bad', text: m.error === 1 ? '1 problem' : m.error + ' problems' }));
+    if (m.warn) tags.push(h('span', { class: 'tag warn', text: 'To confirm' }));
+    const title = E.titleOf(it);
+    return h('button', {
+      class: 'card ' + (GROUP_CLASS[it.group] || 'g-extra') + (m.error ? ' has-error' : ''), type: 'button', draggable: locked ? 'false' : 'true', 'data-id': it.id,
+      'aria-label': E.labelOf(it) + (title ? ', ' + title : '') + ', ' + E.crOf(it) + ' credits' + (m.error ? ', has a problem' : ''),
+      onclick: () => editItem(it.id),
+      ondragstart: (e) => { if (locked) { e.preventDefault(); return; } e.dataTransfer.setData('text/plain', it.id); e.dataTransfer.effectAllowed = 'move'; e.currentTarget.classList.add('dragging'); },
+      ondragend: (e) => e.currentTarget.classList.remove('dragging'),
+    },
+      h('span', { class: code ? 'code' : 'code plain', text: E.labelOf(it) }),
+      h('span', { class: 'cr', text: it.where === 'waived' ? 'waived' : E.crOf(it) + ' cr' }),
+      title ? h('span', { class: 'title', text: title }) : null,
+      h('span', { class: 'tags' }, tags));
+  }
+  function zone(el, where) {
+    el.dataset.where = where;
+    el.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; el.classList.add('over'); });
+    el.addEventListener('dragleave', (e) => { if (!el.contains(e.relatedTarget)) el.classList.remove('over'); });
+    el.addEventListener('drop', (e) => { e.preventDefault(); el.classList.remove('over'); const id = e.dataTransfer.getData('text/plain'); if (id) setWhere(id, where); });
+    return el;
+  }
+  function issueRow(i, clickable) {
+    const text = clickable && i.itemId
+      ? h('button', { class: 'go', type: 'button', text: i.msg, title: 'Show this course', onclick: () => flash(i.itemId) })
+      : h('span', { text: i.msg });
+    const fix = (i.add || []).filter((c) => E.course(c) && !E.hasCode(plan, c)).map((c) =>
+      h('button', { class: 'btn small', type: 'button', text: 'Add ' + c, onclick: () => { const it = E.addCourse(plan, c, i.kind === 'minor' ? 'minor' : 'extra'); commit(); if (it) flash(it.id); } }));
+    return h('li', { class: 'issue ' + i.sev }, text, fix.length ? h('div', { class: 'fix' }, fix) : null);
+  }
+
+  function renderSummary() {
+    const t = view.totals;
+    const pct = (a, b) => Math.max(0, Math.min(100, Math.round((a / b) * 100))) + '%';
+    const meterTile = (k, a, b, unit) => h('div', { class: 'tile' + (a < b ? ' short' : '') },
+      h('span', { class: 'k', text: k }),
+      h('span', { class: 'v' }, String(a), h('small', { text: unit })),
+      h('div', { class: 'meter' }, h('i', { style: 'width:' + pct(a, b) })));
+    const e = view.counts.error, w = view.counts.warn;
+    const toIssues = () => $('#issues').scrollIntoView({ block: 'start', behavior: 'smooth' });
+    setKids($('#summary'), 
+      meterTile('Total credits', t.total, R.total, ' of ' + R.total),
+      (plan.done || t.earned) ? h('div', { class: 'tile' }, h('span', { class: 'k', text: 'Earned so far' }),
+        h('span', { class: 'v' }, String(t.earned), h('small', { text: ' credits' })),
+        h('div', { class: 'meter' }, h('i', { style: 'width:' + pct(t.earned, R.total) }))) : null,
+      meterTile('Credits at Brockport', t.brockport, R.brockport, ' (' + R.brockport + ' required)'),
+      meterTile('Upper-division credits', t.upper, R.upper, ' of ' + R.upper),
+      h('button', { class: 'tile ' + (e ? 'bad' : 'good'), type: 'button', onclick: toIssues },
+        h('span', { class: 'k', text: 'Problems to fix' }), h('span', { class: 'v', text: e ? String(e) : 'None' })),
+      h('button', { class: 'tile ' + (w ? 'warn' : 'good'), type: 'button', onclick: toIssues },
+        h('span', { class: 'k', text: 'Things to confirm' }), h('span', { class: 'v', text: w ? String(w) : 'None' })));
+  }
+  function renderBoard() {
+    const marks = new Map();
+    for (const i of view.issues) {
+      if (!i.itemId || i.sev === 'info') continue;
+      const m = marks.get(i.itemId) || { error: 0, warn: 0 };
+      m[i.sev]++; marks.set(i.itemId, m);
+    }
+    const cardsFor = (where, emptyText, locked) => {
+      const list = plan.items.filter((i) => i.where === where && !view.covered.has(i.id));
+      return h('div', { class: 'cards' }, list.length ? list.map((i) => card(i, marks, locked)) : h('div', { class: 'empty', text: emptyText }));
+    };
+    const cols = view.terms.map((term, t) => zone(h('section', { class: 'term' + (term.done ? ' done' : ''), 'aria-label': term.label + (term.done ? ', completed' : '') },
+      h('header', {}, h('h3', { text: term.label }),
+        term.done ? h('span', { class: 'donetag', text: 'Completed' }) : null,
+        h('span', { class: 'load' + (!term.done && term.credits > R.maxLoad ? ' high' : ''), text: term.credits + ' cr' })),
+      cardsFor('T' + t, term.done ? 'Drop in what was taken.' : 'Nothing here yet. Drop a course in.', term.done)), 'T' + t));
+    cols.push(h('div', { class: 'term addterm' },
+      h('button', { class: 'btn', type: 'button', text: 'Add a semester', onclick: () => { E.setTerms(plan, plan.nTerms + 1); commit(); } }),
+      plan.nTerms > 1 ? h('button', { class: 'btn quiet', type: 'button', text: 'Remove the last semester', onclick: () => { E.setTerms(plan, plan.nTerms - 1); commit(); } }) : null));
+    setKids($('#board'), ...cols);
+
+    const tray = (where, title, note, emptyText) => zone(h('section', { class: 'tray', 'aria-label': title },
+      h('header', {}, h('h3', { text: title })), h('p', { text: note }), cardsFor(where, emptyText)), where);
+    setKids($('#trays'), 
+      tray('unplaced', 'Not placed yet', 'Required, but not in a semester.', 'Everything is placed.'),
+      tray('transfer', 'Transfer or AP credit', 'Counts toward 120, not toward credits at Brockport.', 'Drop courses the student brings in.'),
+      tray('waived', 'Waived or placed out', 'Requirement met, no credit earned.', 'Drop waived courses here.'));
+  }
+  function renderSide() {
+    const groups = [['error', 'Problems to fix'], ['warn', 'Things to confirm'], ['info', 'Notes']];
+    const panel = h('div', { class: 'panel', id: 'issues' }, h('h2', { text: 'What needs attention' }));
+    let any = false;
+    for (const [sev, title] of groups) {
+      const list = view.issues.filter((i) => i.sev === sev);
+      if (!list.length) continue;
+      any = true;
+      put(panel, h('h4', { text: title + ' (' + list.length + ')' }), h('ul', { class: 'issues' }, list.map((i) => issueRow(i, true))));
+    }
+    if (!any) put(panel, h('p', { class: 'allgood', text: 'Nothing to fix. Every rule checks out.' }));
+    const side = [panel];
+    if (view.minor) {
+      const m = view.minor;
+      side.push(h('div', { class: 'panel' }, h('h2', { text: m.name }),
+        h('h4', { text: 'Required courses' }),
+        h('ul', { class: 'checklist' }, m.fixed.map((f) => h('li', { class: f.inPlan ? 'yes' : 'no', text: f.code }))),
+        h('h4', { text: 'Electives: ' + m.have + ' of ' + m.need + ' credits' }),
+        h('p', { class: 'small', text: m.electives.length ? 'Counting ' + m.electives.join(', ') + '.' : 'None counted yet.' }),
+        h('p', { class: 'small', text: 'Choose from ' + m.poolText + '.' })));
+    }
+    side.push(h('div', { class: 'panel' }, h('h2', { text: 'General Education' }),
+      h('ul', { class: 'gelist' }, view.gened.map((g) => h('li', { class: g.open ? 'open' : '' },
+        h('span', { class: 'gcode', text: g.code === 'GEP' ? '' : g.code }),
+        h('button', { class: 'go', type: 'button', title: 'Show this course', onclick: () => flash(g.itemId) },
+          h('span', { class: 'gname', text: g.label }),
+          h('span', { class: 'gstat', text: (g.by ? g.by + ', ' : '') + g.status })),
+        g.coveredBy ? h('button', { class: 'btn small', type: 'button', text: 'Separate', 'aria-label': 'Give ' + g.label + ' its own course again',
+          onclick: () => { E.setAlso(plan, g.coveredBy, g.code, false); commit(); } }) : null))),
+      h('p', { class: 'small', text: 'SUNY General Education credits: ' + view.totals.suny + ' of ' + R.suny + ' required. A course with two codes fills two buckets: open its card and tick what else it fills.' })));
+    side.push(h('div', { class: 'panel' }, h('h2', { text: 'What this checks' }),
+      h('p', { class: 'small', text: 'Prerequisites, fall and spring offerings, semester load, 120 total credits, 30 credits and 18 major credits at Brockport, 48 upper-division credits, the General Education buckets and their 31 SUNY credits, and the 54-credit limit in one discipline.' }),
+      h('p', { class: 'small', text: 'It does not check grades, the 60 liberal-arts credits, or summer and winter terms. Rules come from the department data sheet as of ' + AS_OF + '.' + (STANDALONE ? ' This copy does not update itself when the sheet changes.' : '') })));
+    setKids($('#side'), ...side);
+  }
+  function render() {
+    renderSummary(); renderBoard(); renderSide(); refreshDialog();
+  }
+
+  /* ---------- start ---------- */
+  function start() {
+    plan = restore();
+    buildSetup();
+    syncSetup();
+    $('#btn-new').addEventListener('click', () => confirmDialog('Start a new plan?', 'This replaces the plan on screen with the default layout for ' + DATA.programs[plan.program].name + '.' + unsavedNote(), 'Start new', () => {
+      plan = E.newPlan(plan.program, { start: plan.start });
+      fileHandle = null; fileName = '';
+      syncSetup(); commit({ clean: true });
+    }));
+    if (STANDALONE) {
+      $('#btn-open').addEventListener('click', openLocal);
+      $('#btn-save').addEventListener('click', () => saveLocal(false));
+      $('#btn-saveas').addEventListener('click', () => saveLocal(true));
+      $('#file-open').addEventListener('change', (e) => {
+        const f = e.target.files[0]; e.target.value = '';
+        if (!f) return;
+        const r = new FileReader(); r.onload = () => applyFile(String(r.result), f.name, null); r.readAsText(f);
+      });
+      window.addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+    } else {
+      $('#btn-plans').addEventListener('click', plansDialog);
+      $('#btn-save').addEventListener('click', () => saveToList(false));
+      $('#btn-files').addEventListener('click', filesDialog);
+    }
+    $('#btn-copy').addEventListener('click', () => copy(E.toText(plan), 'Plan copied as text'));
+    $('#btn-add').addEventListener('click', addDialog);
+    $('#asof').textContent = AS_OF;
+    commit({ keep: true });
+    if (STANDALONE) { storeState = 'none'; updateStatus(); return; }
+    const hasClaude = window.claude && typeof window.claude.use === 'function';
+    if (hasClaude) window.claude.use('downloads').then((d) => { downloads = d || null; }).catch(() => { downloads = null; });
+    (async () => {
+      try {
+        if (!hasClaude) throw new Error('no runtime');
+        const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+        const uid = user ? await user.id() : null;
+        if (!db || !uid) throw new Error('no store');
+        store = db.collection('data/users/' + uid);
+        storeState = 'ready';
+      } catch (e) { store = null; storeState = 'none'; }
+      updateStatus();
+    })();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+})();
+
+</script>
+</body>
+</html>
